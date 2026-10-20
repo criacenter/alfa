@@ -112,6 +112,18 @@
     });
     return out;
   }
+  // Cronograma para o cliente: períodos em que a parcela da carta e a da entrada ficam iguais
+  function cronograma(cal, calEnt) {
+    const n = Math.max(cal.length, calEnt.length);
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const c = cal[i] || 0, e = calEnt[i] || 0;
+      const u = out[out.length - 1];
+      if (u && Math.abs(u.carta - c) < 0.005 && Math.abs(u.entrada - e) < 0.005) u.ate = i + 1;
+      else out.push({ de: i + 1, ate: i + 1, carta: c, entrada: e, total: r2(c + e) });
+    }
+    return out;
+  }
   function textoFaixas(fx) {
     return fx.map((f) => pad2(f.n) + ' x ' + formatBRL(f.v)).join(' + ');
   }
@@ -227,6 +239,7 @@
       cotas, regra, credito, entradaForn, preco, entradaFinal: preco.entradaFinal, entradaTotal: preco.entradaFinal + entradaParcelada,
       transferenciaAParte: preco.transferenciaAParte, calendario: cal, faixas: fx, faixasEntrada: fxEnt,
       prazo: prazoTotal, saldo, entradaParcelada, parcelaMax, parcelaInicial, desembolsoMax, fundoReserva: fr,
+      cronograma: cronograma(cal, calEnt),
       taxaMensal, tirMensal: tir, tirAnual: tir == null ? null : (Math.pow(1 + tir / 100, 12) - 1) * 100,
       custoTotal, custoRelativo: credito > 0 ? custoTotal / credito : Infinity,
       pctEntrada: credito > 0 ? preco.entradaFinal / credito * 100 : 0,
@@ -622,6 +635,12 @@
         taxaGratis = false; return;
       }
       if (!atual) { if (/R\$/.test(t)) ignoradas.push(t); return; }
+      // Valor em R$ depois das parcelas = começou outra carta sem código: fecha a anterior em vez de emendar
+      if (atual.etapas.length && /R\$/.test(t) && !/\d\s*[xX]/.test(t)) {
+        fechar();
+        atual = novaCarta('fraga', tipo, { adm: admPadrao || 'HS Consórcios', codigo: '', obs: taxaGratis ? ['Taxa Grátis'] : [] });
+        taxaGratis = false;
+      }
       let m, achouParc = false; RE_PARC.lastIndex = 0;
       while ((m = RE_PARC.exec(t))) { atual.etapas.push({ n: parseInt(m[1], 10), v: parseBR(m[2]) }); achouParc = true; }
       if (achouParc) return;
@@ -656,7 +675,7 @@
       if (cab && tipoDoCabecalho(cab[1])) {
         fechar(); tipo = tipoDoCabecalho(cab[1]); adm = canonAdm(cab[2].replace(/[^\wÀ-ú/ .-]/g, ' ')); notasPendentes = []; return;
       }
-      let m = limpa.match(/^cr[ée]dito\s*:?\s*(R\$\s*[\d.,]+)/i);
+      let m = limpa.match(/^(?:valor\s+(?:do\s+|da\s+)?)?(?:cr[ée]dito|carta)\b[^R\d]*(R\$\s*[\d.,]+)/i);
       if (m) {
         fechar();
         atual = novaCarta('rafael', tipo, { adm, credito: parseBR(m[1]), obs: notasPendentes.slice() });
@@ -672,8 +691,15 @@
       if (/^prazo\s*\/?\s*parcela/i.test(limpa)) return;
       m = limpa.match(/^(\d{1,3})\s*(?:à|a|-|até|ao)\s*(\d{1,3})\s*:?\s*(R\$\s*[\d.,]+)/i);
       if (m && atual) {
-        const n = parseInt(m[2], 10) - parseInt(m[1], 10) + 1;
-        if (n > 0) atual.etapas.push({ n, v: parseBR(m[3]) });
+        const ini = parseInt(m[1], 10), fim = parseInt(m[2], 10);
+        const esperado = somaN(atual.etapas) + 1;
+        // Faixa que não continua a anterior (ex.: "1 à 38" depois de "1 à 4") é de OUTRA carta
+        // cuja linha "Crédito" não foi reconhecida — nunca emenda numa carta só.
+        if (atual.etapas.length && ini !== esperado) {
+          ignoradas.push('Faixa "' + limpa + '" não continua a carta de ' + formatBRL(atual.credito) + ' (deveria começar em ' + esperado + '). Parece ser de outra carta sem a linha "Crédito".');
+          fechar(); return;
+        }
+        if (fim - ini + 1 > 0) atual.etapas.push({ n: fim - ini + 1, v: parseBR(m[3]) });
         return;
       }
       m = limpa.match(/^(\d{1,3})\s*[xX]\s*(?:de\s*)?(R\$\s*[\d.,]+)/);
@@ -717,7 +743,7 @@
   const Motor = {
     parseBR, formatBRL, formatPct, r2, pad2, semAcento,
     ADMS, ADM_CAIXA, canonAdm, logoAdm, FORNECEDORES, TIPOS,
-    prazo, saldoDevedor, ehOportunidade, etapaMaiorPrazo, assinatura, calendario, faixas, textoFaixas,
+    prazo, saldoDevedor, ehOportunidade, etapaMaiorPrazo, assinatura, calendario, faixas, cronograma, textoFaixas,
     SEGMENTOS, FAIXAS_LIMITES, TAXAS_PADRAO, TRANSFERENCIA_PCT, TETO_PCT, AGIO_ALFA_PCT,
     precoPadrao, precificacaoJairo, precificacaoAlfa, precificar, fundoReserva, taxaMensalLinear, tirMensal,
     avaliar, validarJuncao, OBJETIVOS, cartasDoSegmento, buscar, textoProposta,
