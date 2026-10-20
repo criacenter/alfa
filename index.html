@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alfa — Cartas Contempladas</title>
+<link rel="icon" type="image/png" href="assets/favicon_jairo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===================== ACESSO ===================== -->
+  <div id="authGate">
+    <div class="app-wordmark">ALFA<span class="accent"> ·</span> CARTAS CONTEMPLADAS</div>
+    <div class="auth-wrap">
+      <div class="auth-card" id="painelCarregando"><div class="section-sub" style="margin:0;">Carregando...</div></div>
+
+      <div class="auth-card" id="painelLogin" hidden>
+        <h2>Entrar</h2>
+        <div class="section-sub">Use seu usuário (ou e-mail) e senha.</div>
+        <div class="form-row"><label for="loginUser">Usuário ou e-mail</label><input class="inp" id="loginUser" autocomplete="username"></div>
+        <div class="form-row"><label for="loginSenha">Senha</label><input class="inp" id="loginSenha" type="password" autocomplete="current-password"></div>
+        <button class="btn primary full" id="btnLogin">Entrar</button>
+        <div class="form-msg" id="loginMsg"></div>
+        <div class="auth-links">
+          <button class="linkbtn" data-ir="painelCadastro">Criar conta</button>
+          <button class="linkbtn" data-ir="painelRecuperar">Esqueceu a senha?</button>
+        </div>
+      </div>
+
+      <div class="auth-card" id="painelRecuperar" hidden>
+        <h2>Recuperar acesso</h2>
+        <div class="section-sub">Enviamos um link para você criar uma senha nova.</div>
+        <div class="form-row"><label for="recUser">Usuário ou e-mail</label><input class="inp" id="recUser"></div>
+        <button class="btn primary full" id="btnRecuperar">Enviar link</button>
+        <div class="form-msg" id="recMsg"></div>
+        <div class="auth-links"><button class="linkbtn" data-ir="painelLogin">Voltar</button></div>
+      </div>
+
+      <!-- Cadastro: usado também na configuração inicial do administrador -->
+      <div class="auth-card" id="painelCadastro" hidden>
+        <h2 id="cadTitulo">Criar conta</h2>
+        <div class="section-sub" id="cadSub">Depois de criar, o administrador libera o seu acesso.</div>
+        <div class="form-row"><label for="cadNome">Nome (aparece no card)</label><input class="inp" id="cadNome"></div>
+        <div class="form-row"><label for="cadCargo">Título (aparece no card)</label><input class="inp" id="cadCargo" placeholder="ex: Especialista em Consórcio"></div>
+        <div class="form-row"><label for="cadTel">WhatsApp</label><input class="inp" id="cadTel" placeholder="(75) 90000-0000"></div>
+        <div class="form-row"><label for="cadInsta">Instagram (opcional)</label><input class="inp" id="cadInsta" placeholder="@seuperfil"></div>
+        <div class="form-row"><label>Foto (opcional)</label>
+          <div class="foto-row"><img id="cadFotoPrev" alt="" hidden><input type="file" id="cadFoto" accept="image/*"></div></div>
+        <div class="form-row"><label for="cadUser">Usuário (para entrar)</label><input class="inp" id="cadUser" placeholder="ex: maria.silva" autocomplete="username"></div>
+        <div class="form-row"><label for="cadEmail">E-mail</label><input class="inp" id="cadEmail" type="email"></div>
+        <div class="form-row"><label for="cadSenha">Senha</label><input class="inp" id="cadSenha" type="password" autocomplete="new-password"></div>
+        <div class="form-row"><label for="cadSenha2">Repita a senha</label><input class="inp" id="cadSenha2" type="password" autocomplete="new-password"></div>
+        <button class="btn primary full" id="btnCadastrar">Criar conta</button>
+        <div class="form-msg" id="cadMsg"></div>
+        <div class="auth-links" id="cadLinks"><button class="linkbtn" data-ir="painelLogin">Já tenho conta</button></div>
+      </div>
+
+      <div class="auth-card" id="painelEspera" hidden>
+        <h2 id="esperaTitulo">Aguardando liberação</h2>
+        <div class="section-sub" id="esperaTexto">Sua conta foi criada. Assim que o administrador liberar, é só entrar de novo.</div>
+        <button class="btn full" id="btnSairEspera">Sair</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== APLICATIVO ===================== -->
+  <div id="appWrap" hidden>
+    <div class="topbar">
+      <div class="app-wordmark">ALFA<span class="accent"> ·</span> CARTAS CONTEMPLADAS<span class="sub">ESTRATEGISTA DE CONSÓRCIO</span></div>
+      <div class="user-badge"><img id="badgeFoto" alt="" hidden><span><strong id="badgeNome"></strong></span>
+        <button class="linkbtn" id="btnPerfil">Meu perfil</button><button class="linkbtn" id="btnSair">Sair</button></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="busca">Buscar cartas</button>
+      <button class="tab-btn so-base" data-tab="base">Base de cartas</button>
+      <button class="tab-btn so-admin" data-tab="divulgacao">Divulgação</button>
+      <button class="tab-btn so-admin" data-tab="novo">Consórcio Novo</button>
+      <button class="tab-btn so-admin" data-tab="usuarios">Usuários</button>
+    </div>
+
+    <!-- ===================== BUSCA ===================== -->
+    <div class="panel-view active" id="view-busca">
+      <div class="message info" id="buscaBaseInfo" style="margin-bottom:22px;">Carregando a base de cartas...</div>
+
+      <div class="section-title">O que o cliente quer</div>
+      <div class="section-sub">O segmento define quais cartas entram: máquinas, implementos e energia solar usam só cartas de veículo da Caixa.</div>
+      <div class="grid three">
+        <div class="field"><label for="bSeg">Segmento</label>
+          <select id="bSeg">
+            <option value="leves">Veículos leves</option><option value="pesados">Caminhões / pesados</option>
+            <option value="motos">Motos</option><option value="maquinas">Máquinas da linha amarela</option>
+            <option value="implementos">Implementos rodoviários</option><option value="solar">Energia solar</option>
+            <option value="imoveis">Imóveis</option>
+          </select></div>
+        <div class="field"><label for="bCredito">Crédito desejado</label>
+          <div class="input-row"><span class="prefix">R$</span><input type="text" inputmode="decimal" id="bCredito" placeholder="0,00"></div></div>
+        <div class="field"><label for="bObjetivo">Objetivo</label>
+          <select id="bObjetivo"></select></div>
+      </div>
+      <div class="grid" id="bAlvosWrap">
+        <div class="field"><label for="bEntAlvo">Entrada que o cliente tem (opcional)</label>
+          <div class="input-row"><span class="prefix">R$</span><input type="text" inputmode="decimal" id="bEntAlvo" placeholder="opcional"></div></div>
+        <div class="field"><label for="bParcAlvo">Parcela desejada (opcional)</label>
+          <div class="input-row"><span class="prefix">R$</span><input type="text" inputmode="decimal" id="bParcAlvo" placeholder="opcional"></div></div>
+      </div>
+      <div class="section-sub" style="margin:-10px 0 10px;">Limites (opcionais, valem para qualquer objetivo)</div>
+      <div class="grid four">
+        <div class="field"><label for="bEntMax">Entrada máxima</label>
+          <div class="input-row"><span class="prefix">R$</span><input type="text" inputmode="decimal" id="bEntMax" placeholder="sem limite"></div></div>
+        <div class="field"><label for="bParcMax">Parcela máxima</label>
+          <div class="input-row"><span class="prefix">R$</span><input type="text" inputmode="decimal" id="bParcMax" placeholder="sem limite"></div></div>
+        <div class="field"><label for="bTol">Diferença aceita no crédito</label>
+          <div class="input-row"><span class="prefix">%</span><input type="text" inputmode="decimal" id="bTol" value="15"></div></div>
+        <div class="field"><label for="bQtd">Opções</label>
+          <select id="bQtd"><option value="3">3 opções</option><option value="5" selected>5 opções</option><option value="10">10 opções</option></select></div>
+      </div>
+
+      <!-- Precificação: só aparece para quem usa a regra Jairo -->
+      <div class="field prec-field so-regra-jairo" id="prec-busca" style="margin-bottom:22px;">
+        <label>Precificação</label>
+        <div class="prec-row">
+          <div class="prec-seg-auto">Custo do segmento: <strong id="precSegInfo">—</strong></div>
+          <label class="prec-check"><input type="checkbox" class="prec-parceiro"> Tem parceiro</label>
+          <label class="prec-check"><input type="checkbox" class="prec-cheio"> Cobrar valor cheio <span class="prec-hint">(sem desconto progressivo)</span></label>
+          <button type="button" class="prec-edit-btn">✎ Editar percentuais</button>
+        </div>
+        <div class="prec-edit" hidden>
+          <table class="prec-table">
+            <thead><tr><th>Faixa (sobre o crédito)</th><th>Alpha %</th><th>Jairo %</th><th>Parceiro %</th></tr></thead>
+            <tbody>
+              <tr><td>Até R$ 100 mil</td><td><input type="text" inputmode="decimal" class="prec-taxa" data-faixa="0" data-quem="alpha"></td><td><input type="text" inputmode="decimal" class="prec-taxa" data-faixa="0" data-quem="jairo"></td><td><input type="text" inputmode="decimal" class="prec-taxa" data-faixa="0" data-quem="parceiro"></td></tr>
+              <tr><td>De R$ 100 mil a R$ 300 mil</td><td><input type="text" inputmode="decimal" class="prec-taxa" data-faixa="1" data-quem="alpha"></td><td><input type="text" inputmode="decimal" class="prec-taxa" data-faixa="1" data-quem="jairo"></td><td><input type="text" inputmode="decimal" class="prec-taxa" data-faixa="1" data-quem="parceiro"></td></tr>
+              <tr><td>Acima de R$ 300 mil</td><td><input type="text" inputmode="decimal" class="prec-taxa" data-faixa="2" data-quem="alpha"></td><td><input type="text" inputmode="decimal" class="prec-taxa" data-faixa="2" data-quem="jairo"></td><td><input type="text" inputmode="decimal" class="prec-taxa" data-faixa="2" data-quem="parceiro"></td></tr>
+            </tbody>
+          </table>
+          <div class="prec-extra">
+            <div><span class="prec-mini">Custo do segmento</span><div class="input-row"><span class="prefix">R$</span><input type="text" inputmode="decimal" class="prec-custo"></div></div>
+            <div><span class="prec-mini">Transferência</span><div class="input-row"><span class="prefix">%</span><input type="text" inputmode="decimal" class="prec-transf"></div></div>
+            <button type="button" class="btn prec-reset">Restaurar padrão</button>
+          </div>
+          <div class="prec-note">A coluna Parceiro só entra com "Tem parceiro" marcado. O custo do segmento acompanha o segmento escolhido; se você digitar outro valor, ele vale até restaurar o padrão.</div>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-bottom:24px; justify-content:flex-start;">
+        <button class="btn primary" id="btnBuscar">Buscar melhores opções</button>
+        <button class="btn" id="btnManual">Montar manualmente</button>
+      </div>
+
+      <div id="manualWrap" hidden>
+        <div class="stock-card">
+          <div class="section-title" style="font-size:17px;">Montar manualmente</div>
+          <div class="section-sub">Marque as cartas e a ferramenta calcula. Junção só com cartas do mesmo fornecedor e da mesma administradora; cartas do Rafael Holanda vão sempre sozinhas.</div>
+          <div class="filtros">
+            <select class="sel" id="mFornecedor"></select>
+            <select class="sel" id="mAdm"></select>
+            <input class="inp" id="mBusca" placeholder="buscar valor (ex: 150000)">
+          </div>
+          <div class="table-wrap"><table class="data-table" id="mTabela"></table></div>
+          <div class="manual-bar"><span id="mResumo" class="section-sub" style="margin:0;">Nenhuma carta marcada.</span>
+            <div style="display:flex; gap:8px;"><button class="btn sm" id="mLimpar">Limpar</button><button class="btn primary sm" id="mCalcular">Calcular</button></div></div>
+        </div>
+      </div>
+
+      <div id="buscaResultados"></div>
+    </div>
+
+    <!-- ===================== BASE DE CARTAS ===================== -->
+    <div class="panel-view" id="view-base">
+      <div class="stock-card">
+        <div class="section-title" style="font-size:17px;">Atualizar uma lista</div>
+        <div class="section-sub">Escolha o fornecedor e o tipo, cole a lista como veio (site ou WhatsApp) e confira a prévia antes de salvar.</div>
+        <div class="passos">
+          <div class="field"><label for="baseForn">Fornecedor</label><select id="baseForn"></select></div>
+          <div class="field" id="baseTipoWrap"><label for="baseTipo">Tipo</label>
+            <select id="baseTipo"><option value="veiculo">Veículos</option><option value="imovel">Imóveis</option></select></div>
+          <div class="field" id="baseAdmWrap" hidden><label for="baseAdmPadrao">Administradora padrão</label><select id="baseAdmPadrao"></select>
+            <div class="hint">A Fraga e Bitello mostra a administradora só pela logo. Dá para trocar carta por carta na prévia.</div></div>
+        </div>
+        <div class="field" style="margin-bottom:14px;"><label for="baseTexto">Colar lista</label>
+          <textarea class="inp" id="baseTexto" placeholder="Cole aqui a lista do fornecedor, do jeito que veio."></textarea></div>
+        <div class="btn-row" style="justify-content:flex-start;"><button class="btn primary" id="btnLerLista">Ler lista</button><span class="section-sub" id="baseModoInfo" style="margin:0;"></span></div>
+        <div id="basePrevia" style="margin-top:18px;"></div>
+      </div>
+
+      <div class="stock-card">
+        <div class="section-title" style="font-size:17px;">Situação da base</div>
+        <div class="table-wrap"><table class="data-table" id="baseLotes"></table></div>
+      </div>
+
+      <div class="stock-card">
+        <div class="btn-row" style="margin-bottom:12px;"><div class="section-title" style="font-size:17px; margin:0;">Todas as cartas</div>
+          <button class="btn sm" id="btnNovaCarta">+ adicionar carta à mão</button></div>
+        <div class="filtros">
+          <select class="sel" id="fForn"></select><select class="sel" id="fTipo"><option value="">Todos os tipos</option><option value="veiculo">Veículos</option><option value="imovel">Imóveis</option></select>
+          <select class="sel" id="fAdm"></select><input class="inp" id="fBusca" placeholder="buscar valor">
+        </div>
+        <div class="table-wrap"><table class="data-table" id="baseTabela"></table></div>
+      </div>
+    </div>
+
+    <!-- ===================== DIVULGAÇÃO ===================== -->
+    <div class="panel-view" id="view-divulgacao">
+      <div class="message info" style="margin-bottom:22px;">
+        <strong>Como funciona:</strong> a ferramenta varre a base e já traz os cards prontos. Entram só cartas com entrada abaixo de 35% e crédito dentro da faixa de cada segmento (motos e energia solar até R$ 40 mil; leves de R$ 70 a 150 mil; implementos de R$ 70 a 100 mil; caminhões de R$ 180 a 220 mil; máquinas de R$ 250 a 350 mil; imóveis de R$ 350 mil a R$ 1 milhão). Os 2 maiores descontos de cada segmento viram card promocional. Preço com parceiro e desconto progressivo.
+      </div>
+      <div class="btn-row" style="justify-content:flex-start; margin-bottom:22px;"><button class="btn primary" id="btnGerarDiv">Atualizar cards</button><span class="section-sub" id="divResumo" style="margin:0;"></span></div>
+      <div id="divResultados"></div>
+    </div>
+
+    <!-- ===================== CONSÓRCIO NOVO ===================== -->
+    <div class="panel-view" id="view-novo">
+      <div class="grid">
+        <div class="field"><label for="novoTipo">Tipo de bem</label>
+          <select id="novoTipo"><option value="carro">Automóvel</option><option value="moto">Moto</option><option value="imovel">Imóvel</option><option value="caminhao">Caminhão / pesados</option><option value="servicos">Serviços</option></select></div>
+        <div class="field"><label for="admNovo">Administradora</label><select id="admNovo"></select></div>
+      </div>
+      <div class="grid">
+        <div class="field"><label for="novoValor">Valor total da carta</label><div class="input-row"><span class="prefix">R$</span><input type="text" inputmode="decimal" id="novoValor" placeholder="0,00" value="32738"></div></div>
+        <div class="field"><label for="novoStatus">Situação do grupo</label><select id="novoStatus"><option value="Em formação">Em formação</option><option value="Em andamento">Em andamento</option></select></div>
+      </div>
+      <div class="grid">
+        <div class="field"><label for="novoParcela">Valor da parcela</label><div class="input-row"><span class="prefix">R$</span><input type="text" inputmode="decimal" id="novoParcela" placeholder="0,00" value="479,21"></div></div>
+        <div class="field"><label for="novoTipoParcela">Tipo de parcela</label><select id="novoTipoParcela"><option value="Parcela Integral">Parcela integral</option><option value="Parcela Reduzida">Parcela reduzida</option><option value="">Não mostrar</option></select></div>
+      </div>
+      <div class="grid">
+        <div class="field"><label for="novoPrazo">Qtd. de parcelas</label><div class="input-row"><span class="prefix">Nº</span><input type="text" inputmode="numeric" id="novoPrazo" placeholder="ex: 84" value="84"></div></div>
+        <div class="field"><label for="novoTaxaAdm">Taxa de administração</label>
+          <div style="display:flex; gap:8px;"><div class="input-row" style="flex:1;"><span class="prefix">%</span><input type="text" inputmode="decimal" id="novoTaxaAdm" placeholder="ex: 0,24" value="0,24"></div>
+            <select id="novoTaxaPeriodo" style="width:auto; flex-shrink:0;"><option value="a.m.">ao mês</option><option value="a.a.">ao ano</option><option value="total">total do plano</option></select></div></div>
+      </div>
+      <div id="ofertaNovoWrap" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- ===================== USUÁRIOS ===================== -->
+    <div class="panel-view" id="view-usuarios">
+      <div class="stock-card">
+        <div class="btn-row" style="margin-bottom:6px;"><div class="section-title" style="font-size:17px; margin:0;">Usuários</div><button class="btn sm" id="btnAtualizarUsuarios">Atualizar lista</button></div>
+        <div class="section-sub">Quem cria conta entra como <strong>pendente</strong> e só acessa depois que você ativar. Precificação e card definem a regra de entrada e a identidade visual de cada um.</div>
+        <div class="table-wrap"><table class="data-table" id="tabUsuarios"></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal genérico -->
+<div class="modal-bg" id="modalBg" hidden><div class="modal" id="modalBox"></div></div>
+
+<script>
+  /* ================= CONFIGURAÇÃO DO FIREBASE (projeto alfa-9480e) ================= */
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyA6i1UE8TS3c-MO7Pu-cUunQgfXnW3aLZI",
+    authDomain: "alfa-9480e.firebaseapp.com",
+    projectId: "alfa-9480e",
+    storageBucket: "alfa-9480e.firebasestorage.app",
+    messagingSenderId: "957458397514",
+    appId: "1:957458397514:web:027e7e58cd19f957bb29b3"
+  };
+  window.FB_PRONTO = new Promise((res, rej) => { window.__fbRes = res; window.__fbRej = rej; });
+  window.FB_PRONTO.catch(() => {});
+</script>
+<script type="module">
+  const V = '10.12.2';
+  try {
+    const appMod = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`);
+    const authMod = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`);
+    const fsMod = await import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`);
+    const app = appMod.initializeApp(FIREBASE_CONFIG);
+    window.__fbRes(Object.assign({}, appMod, authMod, fsMod, { app, auth: authMod.getAuth(app), db: fsMod.getFirestore(app) }));
+  } catch (e) { console.error(e); window.__fbRej(e); }
+</script>
+<script src="motor.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

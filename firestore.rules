@@ -1,0 +1,54 @@
+rules_version = '2';
+// Regras do banco da Ferramenta Alfa.
+// Cole este conteúdo inteiro em: Firebase → Firestore Database → aba "Regras" → Publicar.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function logado() { return request.auth != null; }
+    function caminhoAdmin() { return /databases/$(database)/documents/config/admin; }
+    function caminhoPerfil() { return /databases/$(database)/documents/usuarios/$(request.auth.uid); }
+    function ehAdmin() { return logado() && exists(caminhoAdmin()) && get(caminhoAdmin()).data.uid == request.auth.uid; }
+    function ativo() { return logado() && exists(caminhoPerfil()) && get(caminhoPerfil()).data.status == 'ativo'; }
+    function podeBase() { return ehAdmin() || (ativo() && get(caminhoPerfil()).data.podeBase == true); }
+
+    // Quem é o administrador (definido uma única vez, na configuração inicial)
+    match /config/admin {
+      allow get: if true;
+      allow create: if logado() && !exists(caminhoAdmin()) && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Usuário → e-mail (permite entrar com o nome de usuário)
+    match /logins/{username} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if logado() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if ehAdmin();
+    }
+
+    // Perfis
+    match /usuarios/{uid} {
+      allow get: if logado() && (request.auth.uid == uid || ehAdmin());
+      allow list: if ehAdmin();
+      // Conta nova sempre entra pendente, com regra e card da Alfa e sem acesso à base.
+      // A conta de administrador só pode ser criada junto com config/admin (configuração inicial).
+      allow create: if logado() && request.auth.uid == uid && (
+        (request.resource.data.role == 'usuario' && request.resource.data.status == 'pendente'
+          && request.resource.data.regra == 'alfa' && request.resource.data.marca == 'alfa'
+          && request.resource.data.podeBase == false)
+        || (request.resource.data.role == 'admin'
+          && getAfter(caminhoAdmin()).data.uid == request.auth.uid)
+      );
+      // Cada um edita só os próprios dados de contato; status, regra, card e permissões só o administrador muda.
+      allow update: if ehAdmin() || (logado() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome', 'cargo', 'telefone', 'instagram', 'fotoB64', 'atualizadoEm']));
+      allow delete: if ehAdmin();
+    }
+
+    // Base de cartas: todos os usuários ativos leem; só o administrador (ou quem ele liberar) altera
+    match /base/{lote} {
+      allow read: if ativo() || ehAdmin();
+      allow write: if podeBase();
+    }
+  }
+}

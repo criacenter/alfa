@@ -1,0 +1,24 @@
+FERRAMENTA ALFA — CARTAS CONTEMPLADAS
+=====================================
+
+ARQUIVOS
+  index.html, style.css, motor.js, app.js  -> a ferramenta
+  assets/                                  -> logos, foto e artes da divulgação
+  firestore.rules                          -> regras de segurança do banco
+
+PUBLICAR (GitHub Pages, como na NIC)
+  1. Crie um repositório novo no GitHub e envie TODOS os arquivos e a pasta assets/
+     (mantendo a mesma estrutura de pastas).
+  2. No repositório: Settings > Pages > Branch "main" / pasta "/ (root)" > Save.
+  3. Copie o endereço gerado (ex.: seuusuario.github.io/alfa).
+
+FIREBASE (projeto alfa-9480e) — uma vez só
+  1. Authentication > Configurações > Domínios autorizados: adicione seuusuario.github.io
+  2. Firestore Database > Regras: apague o que estiver lá, cole o conteúdo de
+     firestore.rules e clique em Publicar.
+
+PRIMEIRO ACESSO
+  - Abra o endereço. A tela "Configuração inicial" aparece uma única vez:
+    crie a SUA conta (você vira o administrador).
+  - Os outros dois criam a conta em "Criar conta" e ficam pendentes até
+    você ativar na aba Usuários.
