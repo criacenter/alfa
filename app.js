@@ -206,7 +206,9 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
+  const VERSAO = '20/10 · 17h30';
   function aplicarPerfil() {
+    if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
     if (EU.fotoB64) { $('badgeFoto').src = EU.fotoB64; $('badgeFoto').hidden = false; } else $('badgeFoto').hidden = true;
     document.querySelectorAll('.so-admin').forEach((el) => { el.hidden = !ehAdmin(); });
@@ -597,9 +599,6 @@
   function cardPropostaHTML(id, a, marca) {
     const logoAdm = M.logoAdm(a.adm);
     const varias = a.cotas.length > 1;
-    const umaFaixa = a.faixas.length === 1;
-    const temOport = a.entradaParcelada > 0;
-    const comCronograma = a.cronograma.length > 1 || temOport;
     const extraConsorcio = a.entradaParcelada + a.transferenciaAParte;
     return `
       <div class="oferta-card ${marca === 'alfa' ? 'marca-alfa' : 'dark'}" id="${id}" data-valor="${a.credito}" data-entrada="${a.entradaFinal}" data-prazo="${a.prazo}" data-saldo="${a.saldo}" data-extra="${extraConsorcio}">
@@ -609,15 +608,13 @@
           <div class="oferta-headline-row"><div class="oferta-headline">Carta de <span class="amount">${BRL(a.credito)}</span></div>
             ${logoAdm ? `<img class="oferta-admin-logo" src="${logoAdm}" alt="${esc(a.adm)}">` : ''}</div>
           <div class="oferta-title-sub">${varias ? a.cotas.length + ' cotas da ' + esc(a.adm) + ' em uma só proposta' : esc(a.adm)}</div>
+          ${condicoesHTML(a)}
           <div class="oferta-statstrip">
-            <div class="oferta-stat"><div class="label">Entrada${temOport ? ' à vista' : ''}</div><div class="value">${BRL(a.entradaFinal)}</div>${temOport ? `<div class="stat-sub">+ ${fmtFx(a.faixasEntrada)}</div>` : ''}</div>
-            <div class="oferta-stat"><div class="label">${comCronograma ? 'Total no 1º mês' : 'Parcela mensal'}</div><div class="value">${BRL(a.cronograma[0] ? a.cronograma[0].total : a.parcelaInicial)}</div>${comCronograma ? '<div class="stat-sub">veja a tabela abaixo</div>' : ''}</div>
             <div class="oferta-stat"><div class="label">Prazo</div><div class="value">${a.prazo} meses</div></div>
             <div class="oferta-stat"><div class="label">Taxa mensal</div><div class="value">${fmtTaxa(a.taxaMensal)}</div></div>
             <div class="oferta-stat"><div class="label">Fundo de reserva</div><div class="value fr-value">${BRL(a.fundoReserva)}</div><div class="fr-badge">↩ de retorno</div></div>
           </div>
           <div class="oferta-fr-note">*Fundo de reserva estimado (valor aproximado). É uma proteção do grupo contra inadimplência; se não for usado, costuma ser devolvido ao consorciado ao final do plano.</div>
-          ${comCronograma ? cronogramaHTML(a) : ''}
           ${a.transferenciaAParte > 0 ? `<div class="alfa-aviso">Taxa de transferência de 1% do crédito (<strong>${BRL(a.transferenciaAParte)}</strong>) paga à parte, na transferência da cota.</div>` : ''}
           ${comparativoHTML(id)}
         </div>
@@ -625,30 +622,21 @@
       </div>
       <div class="oferta-actions"><button class="btn primary" data-copiar-card="${id}">📋 Copiar imagem (WhatsApp)</button></div>`;
   }
-  // "Como fica o pagamento": mês a mês, separando parcela da carta, parcela da entrada e total do mês
-  const ordinal = (n) => n + 'º';
-  function periodoTxt(p) { return p.de === p.ate ? ordinal(p.de) + ' mês' : ordinal(p.de) + ' ao ' + ordinal(p.ate) + ' mês'; }
-  function cronogramaHTML(a) {
-    const temOport = a.entradaParcelada > 0;
-    const linhas = a.cronograma.map((p) => {
-      const n = p.ate - p.de + 1;
-      const qtd = `<span class="pg-qtd">${n} ${n === 1 ? 'parcela' : 'parcelas'}</span>`;
-      if (!temOport) return `<div class="pg-row"><div class="pg-per">${periodoTxt(p)}${qtd}</div><div class="pg-val"><strong>${BRL(p.total)}</strong><span class="pg-mes">por mês</span></div></div>`;
-      const comp = p.entrada > 0
-        ? `<span class="pg-comp">${BRL(p.carta)} da carta + ${BRL(p.entrada)} da entrada</span>`
-        : `<span class="pg-comp">só a parcela da carta</span>`;
-      return `<div class="pg-row${p.entrada > 0 ? ' pg-ent' : ''}"><div class="pg-per">${periodoTxt(p)}${qtd}</div><div class="pg-val"><strong>${BRL(p.total)}</strong>${comp}</div></div>`;
-    }).join('');
-    const notas = [];
-    if (temOport) notas.push(`A entrada é dividida: ${BRL(a.entradaFinal)} à vista no fechamento e ${fmtFx(a.faixasEntrada)}, pagas junto com as primeiras parcelas da carta.`);
-    if (a.cotas.length > 1) notas.push(`Esta proposta junta ${a.cotas.length} cotas da mesma administradora. A parcela diminui à medida que cada cota é quitada.`);
-    else if (a.faixas.length > 1) notas.push('A parcela desta carta muda de valor ao longo do plano, como mostrado acima.');
+  // Condições em destaque: "Entrada Parcelada: 1x de R$ ... + 10x de R$ ..." e "De 1 à 27 R$ ... / De 28 à 36 R$ ..."
+  function condicoesHTML(a) {
+    const oport = a.entradaParcelada > 0;
+    const per = M.periodosCliente(a);
+    const entrada = oport
+      ? `<div class="cond-bloco"><div class="cond-label">Entrada parcelada</div><div class="cond-entrada">${[`1x de ${BRL(a.entradaFinal)}`].concat(a.faixasEntrada.map((f) => `${f.n}x de ${BRL(f.v)}`)).join('<span class="cond-mais"> + </span>')}</div></div>`
+      : `<div class="cond-bloco"><div class="cond-label">Entrada</div><div class="cond-entrada">${BRL(a.entradaFinal)}</div></div>`;
+    const parcelas = per.length === 1
+      ? `<div class="cond-linha"><span class="cond-per">${a.prazo}x de</span><span class="cond-val">${BRL(per[0].valor)}</span></div>`
+      : per.map((p) => `<div class="cond-linha"><span class="cond-per">${M.textoPeriodo(p)}</span><span class="cond-val">${BRL(p.valor)}</span></div>`).join('');
     return `
-      <div class="pgto">
-        <div class="pgto-ttl">Como fica o pagamento</div>
-        ${temOport ? `<div class="pg-row pg-vista"><div class="pg-per">No fechamento<span class="pg-qtd">entrada à vista</span></div><div class="pg-val"><strong>${BRL(a.entradaFinal)}</strong></div></div>` : ''}
-        ${linhas}
-        ${notas.length ? `<div class="pgto-nota">${notas.join(' ')}</div>` : ''}
+      <div class="cond">
+        ${entrada}
+        <div class="cond-bloco"><div class="cond-label">Parcelas</div>${parcelas}
+          ${oport ? '<div class="cond-aviso">Parcelas da entrada já incluídas</div>' : ''}</div>
       </div>`;
   }
   function comparativoHTML(id) {
@@ -702,7 +690,7 @@
     html2canvas(el, { backgroundColor: fundo, scale: 2, useCORS: true }).then((canvas) => {
       if (ehCard) el.classList.remove('capturing');
       canvas.toBlob((blob) => {
-        const volta = (txt) => { btn.textContent = txt; btn.disabled = false; setTimeout(() => { btn.textContent = original; }, 3000); };
+        const volta = (txt) => { btn.textContent = txt; btn.disabled = false; setTimeout(() => { btn.textContent = btn.dataset.orig || original; }, 3000); };
         if (!blob) return volta('⚠️ Falhou, tente de novo');
         const baixar = () => { const a = document.createElement('a'); a.download = 'proposta-' + Date.now() + '.png'; a.href = canvas.toDataURL('image/png'); a.click(); volta('⬇️ Imagem baixada'); if (aoCopiar) aoCopiar(); };
         if (navigator.clipboard && window.ClipboardItem) {
@@ -963,15 +951,29 @@
   // Cards já copiados: ficam salvos no banco (valem no celular e no computador)
   let COPIADOS = null;
   const chaveDiv = (it, promo) => M.assinatura(it.carta) + '|' + it.seg + '|' + (promo ? 'p' : 'n');
+  // Também guarda neste aparelho, para a marca nunca se perder se o banco falhar
+  let AVISO_COPIADOS = '';
+  const lerLocal = () => { try { return JSON.parse(localStorage.getItem('alfa_copiados') || '{}'); } catch (e) { return {}; } };
+  const gravarLocal = () => { try { localStorage.setItem('alfa_copiados', JSON.stringify(COPIADOS)); } catch (e) {} };
   async function carregarCopiados() {
-    try { const fb = await fbx(); const s = await fb.getDoc(fb.doc(fb.db, 'divulgacao', 'copiados')); COPIADOS = s.exists() ? (s.data().itens || {}) : {}; }
-    catch (e) { COPIADOS = COPIADOS || {}; }
+    const local = lerLocal();
+    let remoto = {};
+    try { const fb = await fbx(); const s = await fb.getDoc(fb.doc(fb.db, 'divulgacao', 'copiados')); remoto = s.exists() ? (s.data().itens || {}) : {}; AVISO_COPIADOS = ''; }
+    catch (e) { AVISO_COPIADOS = avisoRegra(e); }
+    COPIADOS = Object.assign({}, local, remoto, COPIADOS || {});
+  }
+  function avisoRegra(e) {
+    return (e && e.code === 'permission-denied')
+      ? '⚠️ Marcas salvas só neste aparelho: falta colar a regra "divulgacao" no Firebase.'
+      : '⚠️ Marcas salvas só neste aparelho (sem conexão com o banco).';
   }
   async function salvarCopiados() {
     const lim = Date.now() - 90 * 86400000; // marcas com mais de 90 dias saem
     Object.keys(COPIADOS).forEach((k) => { if (Date.parse(COPIADOS[k]) < lim) delete COPIADOS[k]; });
-    try { const fb = await fbx(); await fb.setDoc(fb.doc(fb.db, 'divulgacao', 'copiados'), { itens: COPIADOS, atualizadoEm: new Date().toISOString() }); }
-    catch (e) { alert('Não consegui salvar a marca de copiado: ' + traduzErro(e)); }
+    gravarLocal();
+    try { const fb = await fbx(); await fb.setDoc(fb.doc(fb.db, 'divulgacao', 'copiados'), { itens: COPIADOS, atualizadoEm: new Date().toISOString() }); AVISO_COPIADOS = ''; }
+    catch (e) { AVISO_COPIADOS = avisoRegra(e); }
+    resumoDiv();
   }
   function tagCopiado(iso) { const d = new Date(iso); return `<span class="tag-copiado">✓ Copiado em ${d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>`; }
   function estadoItem(el) {
@@ -979,13 +981,14 @@
     el.classList.toggle('copiado', !!iso);
     el.querySelector('.slot-copiado').innerHTML = iso ? tagCopiado(iso) : '';
     el.querySelector('.desmarcar').hidden = !iso;
-    const b = el.querySelector('[data-copiar-art]'); if (!b.disabled) b.textContent = iso ? '📋 Copiar de novo' : '📋 Copiar imagem';
-    b.dataset.orig = b.textContent;
+    const b = el.querySelector('[data-copiar-art]');
+    b.dataset.orig = iso ? '📋 Copiar de novo' : '📋 Copiar imagem';
+    if (!/^(✅|⬇️|⏳)/.test(b.textContent)) b.textContent = b.dataset.orig;
   }
   async function marcarCopiado(chave, sim) {
     if (!COPIADOS) COPIADOS = {};
     if (sim) COPIADOS[chave] = new Date().toISOString(); else delete COPIADOS[chave];
-    document.querySelectorAll('#divResultados .div-item').forEach((el) => { if (el.dataset.chave === chave) setTimeout(() => estadoItem(el), sim ? 3100 : 0); });
+    document.querySelectorAll('#divResultados .div-item').forEach((el) => { if (el.dataset.chave === chave) estadoItem(el); });
     resumoDiv();
     await salvarCopiados();
   }
@@ -995,7 +998,7 @@
     if (DIV) ORDEM_SEG.forEach((seg) => { const s = DIV.segmentos[seg]; if (!s) return;
       s.promo.forEach((it) => { total++; if (COPIADOS && COPIADOS[chaveDiv(it, true)]) ja++; });
       s.normal.forEach((it) => { total++; if (COPIADOS && COPIADOS[chaveDiv(it, false)]) ja++; }); });
-    $('divResumo').textContent = total ? `${total} cards prontos · ${ja} já copiado${ja === 1 ? '' : 's'}` + (DIV.oportunidades.length ? ' · ' + DIV.oportunidades.length + ' Oportunidade(s)' : '') : '';
+    $('divResumo').textContent = (total ? `${total} cards prontos · ${ja} já copiado${ja === 1 ? '' : 's'}` + (DIV.oportunidades.length ? ' · ' + DIV.oportunidades.length + ' Oportunidade(s)' : '') : '') + (AVISO_COPIADOS ? '  ' + AVISO_COPIADOS : '');
     return itens;
   }
   function itemDivHTML(it, promo, k) {

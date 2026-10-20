@@ -450,14 +450,33 @@
   }
 
   /* ---------------- Texto no formato da Alfa ---------------- */
+  /* ---------------- Como o cliente lê a proposta ---------------- */
+  // Períodos de pagamento com o total do mês (parcela da carta + parcela da entrada, se houver)
+  function periodosCliente(a) {
+    const out = [];
+    (a.cronograma || []).forEach((p) => {
+      const u = out[out.length - 1];
+      if (u && Math.abs(u.valor - p.total) < 0.005) u.ate = p.ate;
+      else out.push({ de: p.de, ate: p.ate, valor: p.total });
+    });
+    return out;
+  }
+  function textoPeriodo(p) { return p.de === p.ate ? 'No mês ' + p.de : 'De ' + p.de + ' à ' + p.ate; }
+  // "1x de R$ 22.000,00 + 10x de R$ 3.500,00"
+  function textoEntradaParcelada(a) {
+    return ['1x de ' + formatBRL(a.entradaFinal)].concat((a.faixasEntrada || []).map((f) => f.n + 'x de ' + formatBRL(f.v))).join(' + ');
+  }
   function textoProposta(a) {
     const L = [];
+    const oport = a.entradaParcelada > 0;
     L.push('CRÉDITO: ' + formatBRL(a.credito));
-    const vista = a.entradaFinal;
-    L.push('ENTRADA: ' + formatBRL(vista) + (a.entradaParcelada > 0 ? ' (à vista)' : ''));
-    if (a.entradaParcelada > 0) L.push('PARCELAS DA ENTRADA: ' + textoFaixas(a.faixasEntrada) + ' (junto com as primeiras parcelas)');
-    L.push('PRAZO: ' + pad2(a.prazo) + ' x');
-    L.push('PARCELA: ' + textoFaixas(a.faixas));
+    if (oport) L.push('ENTRADA PARCELADA: ' + textoEntradaParcelada(a));
+    else L.push('ENTRADA: ' + formatBRL(a.entradaFinal));
+    L.push('PRAZO: ' + a.prazo + ' meses');
+    const per = periodosCliente(a);
+    if (per.length === 1) L.push('PARCELAS: ' + a.prazo + 'x de ' + formatBRL(per[0].valor));
+    else L.push('PARCELAS: ' + per.map((p) => textoPeriodo(p) + ' ' + formatBRL(p.valor)).join(' / '));
+    if (oport) L.push('(Parcelas da entrada já incluídas)');
     L.push('BANCO: ' + (a.adm || '—'));
     if (a.transferenciaAParte > 0) L.push('TAXA DE TRANSFERÊNCIA: ' + formatBRL(a.transferenciaAParte) + ' (paga à parte)');
     L.push('FUNDO RESERVA APROXIMADAMENTE: ' + formatBRL(a.fundoReserva));
@@ -746,7 +765,7 @@
     prazo, saldoDevedor, ehOportunidade, etapaMaiorPrazo, assinatura, calendario, faixas, cronograma, textoFaixas,
     SEGMENTOS, FAIXAS_LIMITES, TAXAS_PADRAO, TRANSFERENCIA_PCT, TETO_PCT, AGIO_ALFA_PCT,
     precoPadrao, precificacaoJairo, precificacaoAlfa, precificar, fundoReserva, taxaMensalLinear, tirMensal,
-    avaliar, validarJuncao, OBJETIVOS, cartasDoSegmento, buscar, textoProposta,
+    avaliar, validarJuncao, OBJETIVOS, cartasDoSegmento, buscar, textoProposta, periodosCliente, textoPeriodo, textoEntradaParcelada,
     DIV_FAIXAS, SEG_COM_PROMO, PROMO_POR_SEGMENTO, segmentosDivulgacao, precoDivulgacao, itemDivulgacao, selecionarDivulgacao,
     lerLume, lerUni, lerFraga, lerRafael, lerLista, mesclarRafael, expirarRafael, cartaValida
   };

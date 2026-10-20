@@ -1233,3 +1233,17 @@ textarea.inp{ min-height:150px; resize:vertical; font-family:'JetBrains Mono',mo
 .div-controle label{ display:flex; align-items:center; gap:7px; font-size:13px; color:var(--ink); cursor:pointer; }
 .div-controle input{ width:16px; height:16px; accent-color:var(--gold-bright); }
 #divResultados.ocultar-copiados .div-item.copiado{ display:none; }
+
+/* Condições em destaque no card (entrada e parcelas) */
+.cond{ margin:18px 0 6px; border:1px solid var(--oc-border-strong); border-radius:16px; overflow:hidden; }
+.cond-bloco{ padding:14px 18px; border-bottom:1px solid var(--oc-border); }
+.cond-bloco:last-child{ border-bottom:none; }
+.cond-label{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--oc-accent); margin-bottom:8px; }
+.cond-entrada{ font-family:'JetBrains Mono',monospace; font-size:clamp(17px, 3.6vw, 22px); font-weight:700; color:var(--oc-ink); line-height:1.35; }
+.cond-mais{ color:var(--oc-accent); }
+.cond-linha{ display:flex; justify-content:space-between; align-items:baseline; gap:14px; padding:7px 0; border-bottom:1px dashed var(--oc-border); }
+.cond-linha:last-of-type{ border-bottom:none; }
+.cond-per{ font-size:15px; font-weight:600; color:var(--oc-ink-soft); }
+.cond-val{ font-family:'JetBrains Mono',monospace; font-size:clamp(16px, 3.4vw, 20px); font-weight:700; color:var(--oc-ink); white-space:nowrap; }
+.cond-aviso{ margin-top:10px; display:inline-block; font-size:12px; font-weight:700; color:var(--oc-accent); background:var(--oc-tag-bg); border-radius:100px; padding:5px 12px; }
+.marca-alfa .cond-label{ font-family:'Inter',sans-serif; }

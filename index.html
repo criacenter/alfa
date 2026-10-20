@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" href="assets/favicon_jairo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=3">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -73,7 +73,7 @@
     <div class="topbar">
       <div class="app-wordmark">ALFA<span class="accent"> ·</span> CARTAS CONTEMPLADAS<span class="sub">ESTRATEGISTA DE CONSÓRCIO</span></div>
       <div class="user-badge"><img id="badgeFoto" alt="" hidden><span><strong id="badgeNome"></strong></span>
-        <button class="linkbtn" id="btnPerfil">Meu perfil</button><button class="linkbtn" id="btnSair">Sair</button></div>
+        <button class="linkbtn" id="btnPerfil">Meu perfil</button><button class="linkbtn" id="btnSair">Sair</button><span id="versaoApp" style="font-size:11px; color:var(--ink-dim);"></span></div>
     </div>
 
     <div class="tabs">
@@ -278,7 +278,7 @@
     window.__fbRes(Object.assign({}, appMod, authMod, fsMod, { app, auth: authMod.getAuth(app), db: fsMod.getFirestore(app) }));
   } catch (e) { console.error(e); window.__fbRej(e); }
 </script>
-<script src="motor.js"></script>
-<script src="app.js"></script>
+<script src="motor.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
