@@ -206,7 +206,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '21/10 · 15h';
+  const VERSAO = '21/10 · 15h30';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -944,8 +944,9 @@
           campo(L.eco, BRL(Math.max(it.economia, 0))), campo(L.parcela, BRL(it.parcela)), campo(L.prazo, it.prazo + 'x'));
         if (logo) f.push(`<div class="df-logo" style="${pctBox(L.logo)}"><img src="${logo}" alt=""></div>`);
       } else {
-        const partes = ['1x de ' + BRL(it.entradaFinal)].concat((it.entradaParcelas || []).map((e) => '+ ' + e.n + 'x de ' + BRL(e.v)));
-        f.push(campo(L.ent, partes.map((p) => `<div>${p}</div>`).join(''), partes.length > 1 ? 0.3 : 0.42, 'df-col'),
+        // Entrada à vista em destaque; parcelas da entrada embaixo, menores
+        const parcEnt = (it.entradaParcelas || []).map((e) => `<div class="df-sub">+ ${e.n}x de ${BRL(e.v)}</div>`).join('');
+        f.push(campo(L.ent, `<div class="df-destaque">${BRL(it.entradaFinal)}</div>${parcEnt}`, parcEnt ? 0.3 : 0.42, 'df-col'),
           campo(L.tot, BRL(it.entradaTotal)), campo(L.cred, BRL(c.credito)), campo(L.parcela, BRL(it.parcela)), campo(L.prazo, it.prazo + 'x'),
           campo(L.valid, `<span contenteditable="true" spellcheck="false" title="Clique para mudar a data">${esc(it.vencimento || dataMais(7))}</span>`, 0.55));
         if (logo) f.push(`<div class="df-logo df-chip" style="${pctBox([287, L.logoY - 21, 96, 42])}"><img src="${logo}" alt=""></div>`);
