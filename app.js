@@ -206,7 +206,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '21/10 · 15h30';
+  const VERSAO = '21/10 · 16h';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -940,7 +940,7 @@
       const L = modo === 'o' ? OPORT[it.seg] : PROMO2[it.seg];
       const f = [];
       if (modo === 'p') {
-        f.push(campo(L.valor, BRL(c.credito)), campo(L.cheia, BRL(it.entradaCheia)), campo(L.apenas, BRL(it.entradaFinal), 0.42),
+        f.push(campo(L.valor, BRL(c.credito)), campo(L.cheia, `<span class="df-strike">${BRL(it.entradaCheia)}<i class="df-strike-line"></i></span>`), campo(L.apenas, BRL(it.entradaFinal), 0.42),
           campo(L.eco, BRL(Math.max(it.economia, 0))), campo(L.parcela, BRL(it.parcela)), campo(L.prazo, it.prazo + 'x'));
         if (logo) f.push(`<div class="df-logo" style="${pctBox(L.logo)}"><img src="${logo}" alt=""></div>`);
       } else {
