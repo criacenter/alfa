@@ -85,7 +85,7 @@
 
   function ajustarCadastro() {
     $('cadTitulo').textContent = modoSetup ? 'Configuração inicial' : 'Criar conta';
-    $('cadSub').textContent = modoSetup ? 'Crie a conta do administrador (você). Esta tela aparece uma única vez.' : 'Depois de criar, o administrador libera o seu acesso.';
+    $('cadSub').textContent = modoSetup ? 'Crie a conta do administrador (você). Esta tela aparece uma única vez.' : 'Preencha seus dados. Eles aparecem nos seus cards.';
     $('btnCadastrar').textContent = modoSetup ? 'Criar conta de administrador' : 'Criar conta';
     $('cadLinks').hidden = modoSetup;
   }
@@ -173,7 +173,7 @@
       const perfil = {
         username, email, nome, cargo: v('cadCargo') || 'Especialista em Consórcio', telefone, instagram: v('cadInsta'),
         fotoB64: $('cadFotoPrev').dataset.b64 || '', criadoEm: agora,
-        role: modoSetup ? 'admin' : 'usuario', status: modoSetup ? 'ativo' : 'pendente',
+        role: modoSetup ? 'admin' : 'usuario', status: 'ativo',
         regra: modoSetup ? 'jairo' : 'alfa', marca: modoSetup ? 'jairo' : 'alfa', podeBase: modoSetup
       };
       const batch = fb.writeBatch(fb.db);
@@ -206,7 +206,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '20/10 · 21h30';
+  const VERSAO = '21/10 · 15h';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -896,26 +896,67 @@
       promo: { img: 'assets/divulgacao_promo_implementos.jpg', pos: { valorCarta: { xPct: 56.3, yPct: 27.7, fontPct: 3.2, maxW: 39 }, entradaCheia: { xPct: 56.4, yPct: 43.8, fontPct: 3.2, maxW: 39, strike: true }, entradaPromo: { xPct: 74.8, yPct: 56.7, fontPct: 4.9, maxW: 40, align: 'center', destaque: true }, economia: { xPct: 87.7, yPct: 65.0, fontPct: 2.4, maxW: 12.4, align: 'center' }, parcela: { xPct: 62.1, yPct: 78.8, fontPct: 2.6, maxW: 15.6, align: 'center' }, prazo: { xPct: 85.3, yPct: 78.8, fontPct: 2.6, maxW: 17, align: 'center' } }, admLogoPos: { topPct: 23.4, rightPct: 4.5 } } },
     leves: { nome: 'Veículos Leves', img: 'assets/divulgacao_template_1.jpg',
       pos: { valorCarta: { xPct: 60.8, yPct: 41.7 }, entrada: { xPct: 60.8, yPct: 50.6 }, parcela: { xPct: 61.0, yPct: 59.6 }, prazo: { xPct: 61.0, yPct: 68.7 }, taxaMensal: { xPct: 54.2, yPct: 80.1 }, fundoReserva: { xPct: 77.2, yPct: 80.1 } },
-      larguraDisp: { taxaMensal: 13.6, fundoReserva: 15.8 }, admLogoPos: { topPct: 38.2, rightPct: 5.3 },
-      promo: { img: 'assets/divulgacao_promo_leves.jpg', pos: { valorCarta: { xPct: 56.3, yPct: 25.6, fontPct: 3.2, maxW: 39 }, entradaCheia: { xPct: 56.4, yPct: 41.8, fontPct: 3.2, maxW: 39, strike: true }, entradaPromo: { xPct: 74.8, yPct: 54.7, fontPct: 4.9, maxW: 40, align: 'center', destaque: true }, economia: { xPct: 87.7, yPct: 63.1, fontPct: 2.4, maxW: 12.4, align: 'center' }, parcela: { xPct: 62.1, yPct: 77.1, fontPct: 2.6, maxW: 15.6, align: 'center' }, prazo: { xPct: 85.3, yPct: 77.1, fontPct: 2.6, maxW: 17, align: 'center' } }, admLogoPos: { topPct: 21.4, rightPct: 4.5 } } },
+      larguraDisp: { taxaMensal: 13.6, fundoReserva: 15.8 }, admLogoPos: { topPct: 38.2, rightPct: 5.3 } },
     pesados: { nome: 'Veículos Pesados', img: 'assets/divulgacao_template_2.jpg',
       pos: { valorCarta: { xPct: 63.3, yPct: 41.5 }, entrada: { xPct: 63.5, yPct: 50.5 }, parcela: { xPct: 63.6, yPct: 59.6 }, prazo: { xPct: 63.6, yPct: 68.4 }, taxaMensal: { xPct: 56.9, yPct: 79.5 }, fundoReserva: { xPct: 79.7, yPct: 79.4 } },
-      larguraDisp: { taxaMensal: 14.4, fundoReserva: 14.4 }, admLogoPos: { topPct: 37.9, rightPct: 4.3 },
-      promo: { img: 'assets/divulgacao_promo_pesados.jpg', pos: { valorCarta: { xPct: 56.3, yPct: 25.7, fontPct: 3.2, maxW: 39 }, entradaCheia: { xPct: 56.4, yPct: 41.8, fontPct: 3.2, maxW: 39, strike: true }, entradaPromo: { xPct: 74.8, yPct: 54.7, fontPct: 4.9, maxW: 40, align: 'center', destaque: true }, economia: { xPct: 87.7, yPct: 63.1, fontPct: 2.4, maxW: 12.4, align: 'center' }, parcela: { xPct: 62.1, yPct: 77.1, fontPct: 2.6, maxW: 15.6, align: 'center' }, prazo: { xPct: 85.3, yPct: 77.1, fontPct: 2.6, maxW: 17, align: 'center' } }, admLogoPos: { topPct: 21.4, rightPct: 4.5 } } },
+      larguraDisp: { taxaMensal: 14.4, fundoReserva: 14.4 }, admLogoPos: { topPct: 37.9, rightPct: 4.3 } },
     maquinas: { nome: 'Máquinas da Linha Amarela', img: 'assets/divulgacao_template_3.jpg',
       pos: { valorCarta: { xPct: 63.3, yPct: 41.9 }, entrada: { xPct: 63.5, yPct: 50.7 }, parcela: { xPct: 63.6, yPct: 59.8 }, prazo: { xPct: 63.7, yPct: 68.5 }, taxaMensal: { xPct: 56.9, yPct: 79.4 }, fundoReserva: { xPct: 79.7, yPct: 79.4 } },
-      larguraDisp: { taxaMensal: 14.4, fundoReserva: 14.3 }, admLogoPos: { topPct: 38.3, rightPct: 4.3 },
-      promo: { img: 'assets/divulgacao_promo_maquinas.jpg', pos: { valorCarta: { xPct: 56.3, yPct: 26.3, fontPct: 3.2, maxW: 39 }, entradaCheia: { xPct: 56.4, yPct: 41.8, fontPct: 3.2, maxW: 39, strike: true }, entradaPromo: { xPct: 74.8, yPct: 54.7, fontPct: 4.9, maxW: 40, align: 'center', destaque: true }, economia: { xPct: 87.7, yPct: 63.1, fontPct: 2.4, maxW: 12.4, align: 'center' }, parcela: { xPct: 62.1, yPct: 77.1, fontPct: 2.6, maxW: 15.6, align: 'center' }, prazo: { xPct: 85.3, yPct: 77.1, fontPct: 2.6, maxW: 17, align: 'center' } }, admLogoPos: { topPct: 22.1, rightPct: 4.5 } } },
+      larguraDisp: { taxaMensal: 14.4, fundoReserva: 14.3 }, admLogoPos: { topPct: 38.3, rightPct: 4.3 } },
     imoveis: { nome: 'Imobiliário', img: 'assets/divulgacao_template_4.jpg',
       pos: { valorCarta: { xPct: 63.2, yPct: 41.5 }, entrada: { xPct: 63.4, yPct: 50.5 }, parcela: { xPct: 63.5, yPct: 59.5 }, prazo: { xPct: 63.6, yPct: 68.4 }, taxaMensal: { xPct: 56.9, yPct: 79.4 }, fundoReserva: { xPct: 79.6, yPct: 79.5 } },
-      larguraDisp: { taxaMensal: 14.3, fundoReserva: 14.3 }, admLogoPos: { topPct: 38.0, rightPct: 4.4 },
-      promo: { img: 'assets/divulgacao_promo_imoveis.jpg', pos: { valorCarta: { xPct: 56.3, yPct: 25.7, fontPct: 3.2, maxW: 39 }, entradaCheia: { xPct: 56.4, yPct: 41.7, fontPct: 3.2, maxW: 39, strike: true }, entradaPromo: { xPct: 74.8, yPct: 54.7, fontPct: 4.9, maxW: 40, align: 'center', destaque: true }, economia: { xPct: 87.7, yPct: 63.1, fontPct: 2.4, maxW: 12.4, align: 'center' }, parcela: { xPct: 62.1, yPct: 77.1, fontPct: 2.6, maxW: 15.6, align: 'center' }, prazo: { xPct: 85.3, yPct: 77.1, fontPct: 2.6, maxW: 17, align: 'center' } }, admLogoPos: { topPct: 21.4, rightPct: 4.5 } } }
+      larguraDisp: { taxaMensal: 14.3, fundoReserva: 14.3 }, admLogoPos: { topPct: 38.0, rightPct: 4.4 } }
   };
   const ORDEM_SEG = ['leves', 'pesados', 'motos', 'maquinas', 'implementos', 'solar', 'imoveis'];
   const FONT_PCT = 2.6, ADM_LOGO_W = 11;
   const DIV_POR_PAGINA = 6;
 
-  function arteHTML(id, it, promo) {
+  // Artes novas (1122 x 1402): cada campo é a caixa branca medida na arte, em pixels [x, y, largura, altura]
+  const ART_W = 1122, ART_H = 1402;
+  const PROMO2 = {
+    leves: { img: 'assets/divulgacao_promo2_leves.jpg', logo: [430, 533, 83, 36], valor: [75, 586, 452, 64], cheia: [155, 726, 307, 68], apenas: [493, 771, 547, 129], eco: [652, 956, 201, 50], parcela: [177, 1104, 336, 73], prazo: [715, 1104, 334, 74] },
+    pesados: { img: 'assets/divulgacao_promo2_pesados.jpg', logo: [430, 533, 82, 37], valor: [75, 587, 449, 64], cheia: [156, 725, 308, 69], apenas: [492, 768, 544, 130], eco: [649, 950, 205, 51], parcela: [177, 1100, 334, 75], prazo: [714, 1100, 333, 74] },
+    imoveis: { img: 'assets/divulgacao_promo2_imoveis.jpg', logo: [431, 533, 82, 37], valor: [75, 587, 450, 64], cheia: [156, 725, 309, 69], apenas: [492, 767, 545, 131], eco: [649, 949, 206, 53], parcela: [177, 1099, 334, 75], prazo: [714, 1100, 333, 74] },
+    maquinas: { img: 'assets/divulgacao_promo2_maquinas.jpg', logo: [432, 534, 81, 37], valor: [75, 586, 451, 65], cheia: [156, 725, 309, 68], apenas: [493, 769, 545, 130], eco: [650, 951, 204, 51], parcela: [177, 1103, 334, 74], prazo: [715, 1103, 333, 74] }
+  };
+  const OPORT = {
+    pesados: { img: 'assets/divulgacao_oport_pesados.jpg', ent: [597, 633, 404, 106], tot: [615, 759, 199, 53], cred: [70, 925, 273, 65], parcela: [437, 925, 257, 65], prazo: [787, 925, 265, 65], valid: [681, 1033, 154, 41], logoY: 889 },
+    leves: { img: 'assets/divulgacao_oport_leves.jpg', ent: [595, 658, 424, 105], tot: [614, 783, 205, 55], cred: [72, 952, 272, 68], parcela: [438, 952, 255, 68], prazo: [786, 952, 264, 68], valid: [680, 1060, 154, 42], logoY: 914 },
+    solar: { img: 'assets/divulgacao_oport_solar.jpg', ent: [596, 600, 378, 106], tot: [615, 725, 199, 54], cred: [70, 892, 274, 66], parcela: [437, 892, 257, 66], prazo: [787, 892, 264, 66], valid: [681, 1000, 154, 42], logoY: 857 },
+    imoveis: { img: 'assets/divulgacao_oport_imoveis.jpg', ent: [596, 600, 408, 106], tot: [615, 725, 199, 54], cred: [70, 892, 274, 65], parcela: [437, 892, 257, 65], prazo: [787, 892, 265, 65], valid: [681, 1000, 153, 42], logoY: 857 },
+    implementos: { img: 'assets/divulgacao_oport_implementos.jpg', ent: [596, 633, 406, 105], tot: [615, 759, 199, 53], cred: [70, 925, 274, 65], parcela: [437, 925, 257, 65], prazo: [786, 925, 266, 65], valid: [681, 1033, 153, 41], logoY: 890 },
+    maquinas: { img: 'assets/divulgacao_oport_maquinas.jpg', ent: [596, 633, 379, 105], tot: [615, 758, 199, 54], cred: [70, 925, 274, 65], parcela: [437, 925, 257, 65], prazo: [787, 925, 265, 65], valid: [681, 1033, 154, 41], logoY: 890 },
+    motos: { img: 'assets/divulgacao_oport_motos.jpg', ent: [595, 657, 395, 106], tot: [614, 783, 198, 55], cred: [71, 952, 273, 68], parcela: [437, 952, 257, 68], prazo: [786, 951, 263, 68], valid: [680, 1060, 153, 41], logoY: 916 }
+  };
+  const pctBox = (r) => `left:${r[0] / ART_W * 100}%; top:${r[1] / ART_H * 100}%; width:${r[2] / ART_W * 100}%; height:${r[3] / ART_H * 100}%;`;
+  // k = tamanho da letra em relação à altura da caixa
+  const campo = (r, html, k, extra) => `<div class="df-box${extra ? ' ' + extra : ''}" data-k="${k || 0.5}" style="${pctBox(r)}">${html}</div>`;
+  const dataMais = (dias) => { const d = new Date(Date.now() + dias * 86400000); return d.toLocaleDateString('pt-BR'); };
+
+  function arteHTML(id, it, modo) {
+    const c = it.carta;
+    const logo = M.logoAdm(c.adm);
+    if (modo === 'o' || (modo === 'p' && PROMO2[it.seg])) {
+      const L = modo === 'o' ? OPORT[it.seg] : PROMO2[it.seg];
+      const f = [];
+      if (modo === 'p') {
+        f.push(campo(L.valor, BRL(c.credito)), campo(L.cheia, BRL(it.entradaCheia)), campo(L.apenas, BRL(it.entradaFinal), 0.42),
+          campo(L.eco, BRL(Math.max(it.economia, 0))), campo(L.parcela, BRL(it.parcela)), campo(L.prazo, it.prazo + 'x'));
+        if (logo) f.push(`<div class="df-logo" style="${pctBox(L.logo)}"><img src="${logo}" alt=""></div>`);
+      } else {
+        const partes = ['1x de ' + BRL(it.entradaFinal)].concat((it.entradaParcelas || []).map((e) => '+ ' + e.n + 'x de ' + BRL(e.v)));
+        f.push(campo(L.ent, partes.map((p) => `<div>${p}</div>`).join(''), partes.length > 1 ? 0.3 : 0.42, 'df-col'),
+          campo(L.tot, BRL(it.entradaTotal)), campo(L.cred, BRL(c.credito)), campo(L.parcela, BRL(it.parcela)), campo(L.prazo, it.prazo + 'x'),
+          campo(L.valid, `<span contenteditable="true" spellcheck="false" title="Clique para mudar a data">${esc(it.vencimento || dataMais(7))}</span>`, 0.55));
+        if (logo) f.push(`<div class="df-logo df-chip" style="${pctBox([287, L.logoY - 21, 96, 42])}"><img src="${logo}" alt=""></div>`);
+      }
+      return `<div class="div-preview-container" id="${id}" style="height:0; padding-top:${ART_H / ART_W * 100}%;"><img class="div-base" src="${L.img}" data-arte="${id}">${f.join('')}</div>`;
+    }
+    return arteAntigaHTML(id, it, modo === 'p');
+  }
+
+  // Artes antigas (cards normais e o promocional de implementos), posicionadas por ponto
+  function arteAntigaHTML(id, it, promo) {
     const arte = ARTES[it.seg];
     const layout = promo ? arte.promo : arte;
     const larg = promo ? {} : (arte.larguraDisp || {});
@@ -947,6 +988,13 @@
       const mw = parseFloat(el.dataset.maxw); if (!mw) return;
       while (el.scrollWidth > w * (mw / 100) && t > 6) { t -= 0.5; el.style.fontSize = t + 'px'; }
     });
+    // campos por caixa: letra proporcional à altura da caixa, encolhe se não couber na largura
+    box.querySelectorAll('.df-box').forEach((el) => {
+      const h = el.getBoundingClientRect().height;
+      let t = h * (parseFloat(el.dataset.k) || 0.5);
+      el.style.fontSize = t + 'px';
+      while ((el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1) && t > 6) { t -= 0.5; el.style.fontSize = t + 'px'; }
+    });
     const lg = box.querySelector('.div-adm-logo'); if (lg) lg.style.width = (w * ADM_LOGO_W / 100) + 'px';
   }
   function ajustarTodasArtes() { document.querySelectorAll('#divResultados .div-preview-container').forEach((b) => ajustarFonteArte(b.id)); }
@@ -955,7 +1003,7 @@
   let DIV = null;
   // Cards já copiados: ficam salvos no banco (valem no celular e no computador)
   let COPIADOS = null;
-  const chaveDiv = (it, promo) => M.assinatura(it.carta) + '|' + it.seg + '|' + (promo ? 'p' : 'n');
+  const chaveDiv = (it, modo) => M.assinatura(it.carta) + '|' + it.seg + '|' + modo;
   // Também guarda neste aparelho, para a marca nunca se perder se o banco falhar
   let AVISO_COPIADOS = '';
   const lerLocal = () => { try { return JSON.parse(localStorage.getItem('alfa_copiados') || '{}'); } catch (e) { return {}; } };
@@ -1001,19 +1049,22 @@
     const itens = [...document.querySelectorAll('#divResultados .div-item')];
     let total = 0, ja = 0;
     if (DIV) ORDEM_SEG.forEach((seg) => { const s = DIV.segmentos[seg]; if (!s) return;
-      s.promo.forEach((it) => { total++; if (COPIADOS && COPIADOS[chaveDiv(it, true)]) ja++; });
-      s.normal.forEach((it) => { total++; if (COPIADOS && COPIADOS[chaveDiv(it, false)]) ja++; }); });
-    $('divResumo').textContent = (total ? `${total} cards prontos · ${ja} já copiado${ja === 1 ? '' : 's'}` + (DIV.oportunidades.length ? ' · ' + DIV.oportunidades.length + ' Oportunidade(s)' : '') : '') + (AVISO_COPIADOS ? '  ' + AVISO_COPIADOS : '');
+      s.promo.forEach((it) => { total++; if (COPIADOS && COPIADOS[chaveDiv(it, 'p')]) ja++; });
+      s.normal.forEach((it) => { total++; if (COPIADOS && COPIADOS[chaveDiv(it, 'n')]) ja++; }); });
+    if (DIV) DIV.oportunidades.forEach((it) => { total++; if (COPIADOS && COPIADOS[chaveDiv(it, 'o')]) ja++; });
+    $('divResumo').textContent = (total ? `${total} cards prontos · ${ja} já copiado${ja === 1 ? '' : 's'}` + (DIV.oportunidades.length ? ' (' + DIV.oportunidades.length + ' de Oportunidade)' : '') : '') + (AVISO_COPIADOS ? '  ' + AVISO_COPIADOS : '');
     return itens;
   }
-  function itemDivHTML(it, promo, k) {
-    const id = 'arte-' + it.seg + '-' + k + '-' + (promo ? 'p' : 'n');
+  function itemDivHTML(it, modo, k) {
+    const id = 'arte-' + it.seg + '-' + k + '-' + modo;
     const c = it.carta;
-    const chave = chaveDiv(it, promo);
+    const chave = chaveDiv(it, modo);
     const iso = COPIADOS && COPIADOS[chave];
-    return `<div class="div-item${iso ? ' copiado' : ''}" data-chave="${esc(chave)}">${promo ? '<span class="tag-promo">Promocional</span>' : ''}<span class="slot-copiado">${iso ? tagCopiado(iso) : ''}</span>
-      ${arteHTML(id, it, promo)}
-      <div class="meta">${M.FORNECEDORES[c.fornecedor] ? M.FORNECEDORES[c.fornecedor].nome : ''} · ${esc(c.adm)} · entrada ${pct(it.pctEntrada)}${promo ? ' · economia ' + BRL(it.economia) : ''}${c.codigo ? ' · cota ' + esc(c.codigo) : ''}</div>
+    const tag = modo === 'p' ? '<span class="tag-promo">Promocional</span>' : (modo === 'o' ? '<span class="tag-promo">Oportunidade · ' + ARTES[it.seg].nome + '</span>' : '');
+    const extra = modo === 'p' ? ' · economia ' + BRL(it.economia) : (modo === 'o' ? ' · entrada total ' + BRL(it.entradaTotal) + ' · clique na data para mudar a validade' : '');
+    return `<div class="div-item${iso ? ' copiado' : ''}" data-chave="${esc(chave)}">${tag}<span class="slot-copiado">${iso ? tagCopiado(iso) : ''}</span>
+      ${arteHTML(id, it, modo)}
+      <div class="meta">${M.FORNECEDORES[c.fornecedor] ? M.FORNECEDORES[c.fornecedor].nome : ''} · ${esc(c.adm)} · entrada ${pct(it.pctEntrada)}${extra}${c.codigo ? ' · cota ' + esc(c.codigo) : ''}</div>
       <button class="btn primary sm" data-copiar-art="${id}">${iso ? '📋 Copiar de novo' : '📋 Copiar imagem'}</button>
       <button class="desmarcar"${iso ? '' : ' hidden'}>desmarcar como copiado</button></div>`;
   }
@@ -1028,26 +1079,24 @@
       total += s.promo.length + s.normal.length;
       h += `<div class="div-seg" data-seg="${seg}"><div class="div-seg-head"><div class="section-title" style="margin:0;">${ARTES[seg].nome}</div>
         <span class="section-sub" style="margin:0;">${s.promo.length} promocional · ${s.normal.length} normal</span></div><div class="div-grid">`;
-      s.promo.forEach((it, k) => { h += itemDivHTML(it, true, k); });
-      s.normal.slice(0, DIV_POR_PAGINA).forEach((it, k) => { h += itemDivHTML(it, false, k); });
+      s.promo.forEach((it, k) => { h += itemDivHTML(it, 'p', k); });
+      s.normal.slice(0, DIV_POR_PAGINA).forEach((it, k) => { h += itemDivHTML(it, 'n', k); });
       h += '</div>';
       if (s.normal.length > DIV_POR_PAGINA) h += `<div class="btn-row" style="margin-top:14px;"><button class="btn sm" data-mais="${seg}">Mostrar todos (${s.normal.length})</button></div>`;
       h += '</div>';
     });
-    // Oportunidades: todas entram; a arte própria ainda vai ser criada
+    // Oportunidades: todas entram (uma arte por segmento em que a carta se encaixa)
     if (DIV.oportunidades.length) {
-      h += `<div class="div-seg"><div class="div-seg-head"><div class="section-title" style="margin:0;">Oportunidades</div><span class="section-sub" style="margin:0;">${DIV.oportunidades.length} carta(s) · arte em criação</span></div>
-        <div class="message info" style="margin-bottom:12px;">Quando a arte das Oportunidades ficar pronta, os cards aparecem aqui. Por enquanto, os números já calculados:</div>
-        <div class="table-wrap"><table class="data-table"><thead><tr><th>Administradora</th><th>Crédito</th><th>Entrada à vista</th><th>Parcelas da entrada</th><th>Parcelas</th><th>Prazo</th></tr></thead><tbody>
-        ${DIV.oportunidades.map((it) => `<tr><td>${esc(it.carta.adm)}</td><td class="mono">${BRL(it.carta.credito)}</td><td class="mono">${BRL(it.entradaFinal)}</td><td class="mono">${fmtFx(it.carta.entradaParcelas)}</td><td class="mono">${fmtFx(it.carta.etapas)}</td><td class="mono">${it.prazo}x</td></tr>`).join('')}
-        </tbody></table></div></div>`;
+      h += `<div class="div-seg" data-seg="oport"><div class="div-seg-head"><div class="section-title" style="margin:0;">Oportunidades</div><span class="section-sub" style="margin:0;">${DIV.oportunidades.length} card(s)</span></div><div class="div-grid">`;
+      DIV.oportunidades.forEach((it, k) => { h += itemDivHTML(it, 'o', k); });
+      h += '</div></div>';
     }
     out.innerHTML = h || '<div class="message warn">Nenhuma carta da base entra nos critérios de divulgação agora.</div>';
     resumoDiv();
     out.querySelectorAll('[data-mais]').forEach((b) => b.addEventListener('click', () => {
       const seg = b.dataset.mais, s = DIV.segmentos[seg];
       const grid = out.querySelector(`.div-seg[data-seg="${seg}"] .div-grid`);
-      grid.insertAdjacentHTML('beforeend', s.normal.slice(DIV_POR_PAGINA).map((it, k) => itemDivHTML(it, false, k + DIV_POR_PAGINA)).join(''));
+      grid.insertAdjacentHTML('beforeend', s.normal.slice(DIV_POR_PAGINA).map((it, k) => itemDivHTML(it, 'n', k + DIV_POR_PAGINA)).join(''));
       b.parentElement.remove(); prepararArtes();
     }));
     prepararArtes();

@@ -1258,3 +1258,13 @@ textarea.inp{ min-height:150px; resize:vertical; font-family:'JetBrains Mono',mo
 .comp-mais{ color:var(--oc-accent); font-weight:700; padding-bottom:1px; }
 .oferta-stat .stat-sub{ font-size:10.5px; color:var(--oc-ink-dim); margin-top:6px; }
 @media (max-width: 480px){ .oferta-statstrip.strip-comp{ grid-template-columns: 1fr 1fr; } }
+
+/* Artes novas: campos centralizados dentro das caixas brancas */
+.df-box{ position:absolute; z-index:3; display:flex; align-items:center; justify-content:center; text-align:center; padding:0 3%;
+  font-family:'JetBrains Mono',monospace; font-weight:800; color:#1e1712; white-space:nowrap; line-height:1.15; overflow:hidden; box-sizing:border-box; }
+.df-box.df-col{ flex-direction:column; gap:2%; }
+.df-box [contenteditable]{ outline:none; }
+.df-box [contenteditable]:focus{ background:rgba(216,174,94,0.25); }
+.df-logo{ position:absolute; z-index:3; display:flex; align-items:center; justify-content:center; box-sizing:border-box; padding:0.4%; }
+.df-logo img{ max-width:100%; max-height:100%; object-fit:contain; display:block; }
+.df-chip{ background:#fff; border-radius:6px; }

@@ -522,9 +522,18 @@
     return {
       carta: c, seg, entradaFinal: pr.res.entradaFinal, entradaCheia: pr.resCheio.entradaFinal, economia: pr.economia,
       pctEntrada: pr.res.entradaFinal / c.credito * 100, parcela: et.v, prazo: pz,
+      entradaParcelas: c.entradaParcelas || [], entradaTotal: pr.res.entradaFinal + somaNV(c.entradaParcelas), vencimento: c.vencimento || '',
       taxaMensal: taxaMensalLinear(c.credito, pr.res.entradaFinal, saldoDevedor(c) + somaNV(c.entradaParcelas), pz),
       fundoReserva: fundoReserva(c.credito)
     };
+  }
+  // Segmento da arte para uma Oportunidade fora das faixas (todas as Oportunidades são divulgadas)
+  function segmentoPadrao(c) {
+    if (c.tipo === 'imovel') return 'imoveis';
+    if (c.credito <= 55000) return 'motos';
+    if (c.credito <= 165000) return 'leves';
+    if (c.credito <= 235000 || c.adm !== ADM_CAIXA) return 'pesados';
+    return 'maquinas';
   }
   function selecionarDivulgacao(base) {
     const porSeg = {};
@@ -532,8 +541,8 @@
     base.forEach((c) => {
       const segs = segmentosDivulgacao(c);
       if (ehOportunidade(c)) {
-        // Oportunidade: todas entram (a arte própria ainda vai ser criada)
-        oportunidades.push(itemDivulgacao(c, segs[0] || (c.tipo === 'imovel' ? 'imoveis' : 'leves')));
+        // Oportunidade: todas entram, uma arte para cada segmento em que a carta se encaixa
+        (segs.length ? segs : [segmentoPadrao(c)]).forEach((seg) => oportunidades.push(itemDivulgacao(c, seg)));
         return;
       }
       segs.forEach((seg) => {
@@ -628,7 +637,8 @@
         else if (r) obs.push(r);
       });
       if (!adm) { const sp = linha.slice(ultimoFim).replace(RE_DATA, ' ').replace(/oportunidade/i, '').trim(); adm = sp; }
-      const c = novaCarta('uni', tipo, { adm: canonAdm(adm), credito, entrada, entradaParcelas, etapas, obs });
+      const dt = linha.match(RE_DATA);
+      const c = novaCarta('uni', tipo, { adm: canonAdm(adm), credito, entrada, entradaParcelas, etapas, obs, vencimento: dt ? dt[0] : '' });
       if (cartaValida(c) && c.adm) cartas.push(c); else ignoradas.push(linha.trim());
     });
     return { cartas, ignoradas };
@@ -726,7 +736,10 @@
       // Linhas extras: taxa, vencimento, junção, cadastro, procuração...
       const nota = limpa.replace(/[📝🖋️✍️📌⚠️]/gu, '').trim();
       if (!nota) return;
-      if (/taxa de transf|vencimento/i.test(nota)) { if (atual) atual.obs.push(nota); return; }
+      if (/taxa de transf|vencimento/i.test(nota)) {
+        if (atual) { atual.obs.push(nota); const dv = nota.match(RE_DATA); if (dv && /vencimento/i.test(nota)) atual.vencimento = dv[0]; }
+        return;
+      }
       const ehNegritoSozinho = /^\*[^*]+\*$/.test(linha);
       if (ehNegritoSozinho || !atual || !atual.etapas.length) notasPendentes.push(nota);
       else atual.obs.push(nota);

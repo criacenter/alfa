@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" href="assets/favicon_jairo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -44,7 +44,7 @@
       <!-- Cadastro: usado também na configuração inicial do administrador -->
       <div class="auth-card" id="painelCadastro" hidden>
         <h2 id="cadTitulo">Criar conta</h2>
-        <div class="section-sub" id="cadSub">Depois de criar, o administrador libera o seu acesso.</div>
+        <div class="section-sub" id="cadSub">Preencha seus dados. Eles aparecem nos seus cards.</div>
         <div class="form-row"><label for="cadNome">Nome (aparece no card)</label><input class="inp" id="cadNome"></div>
         <div class="form-row"><label for="cadCargo">Título (aparece no card)</label><input class="inp" id="cadCargo" placeholder="ex: Especialista em Consórcio"></div>
         <div class="form-row"><label for="cadTel">WhatsApp</label><input class="inp" id="cadTel" placeholder="(75) 90000-0000"></div>
@@ -245,7 +245,7 @@
     <div class="panel-view" id="view-usuarios">
       <div class="stock-card">
         <div class="btn-row" style="margin-bottom:6px;"><div class="section-title" style="font-size:17px; margin:0;">Usuários</div><button class="btn sm" id="btnAtualizarUsuarios">Atualizar lista</button></div>
-        <div class="section-sub">Quem cria conta entra como <strong>pendente</strong> e só acessa depois que você ativar. Precificação e card definem a regra de entrada e a identidade visual de cada um.</div>
+        <div class="section-sub">Quem cria conta já entra <strong>ativo</strong>. Para tirar o acesso de alguém, mude para <strong>Bloqueado</strong>. Precificação e card definem a regra de entrada e a identidade visual de cada um.</div>
         <div class="table-wrap"><table class="data-table" id="tabUsuarios"></table></div>
       </div>
     </div>
@@ -278,7 +278,7 @@
     window.__fbRes(Object.assign({}, appMod, authMod, fsMod, { app, auth: authMod.getAuth(app), db: fsMod.getFirestore(app) }));
   } catch (e) { console.error(e); window.__fbRej(e); }
 </script>
-<script src="motor.js?v=5"></script>
-<script src="app.js?v=5"></script>
+<script src="motor.js?v=6"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>
