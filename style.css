@@ -1248,3 +1248,13 @@ textarea.inp{ min-height:150px; resize:vertical; font-family:'JetBrains Mono',mo
 .cond-val{ font-family:'JetBrains Mono',monospace; font-size:clamp(16px, 3.4vw, 20px); font-weight:700; color:var(--oc-ink); white-space:nowrap; }
 .cond-aviso{ margin-top:10px; display:inline-block; font-size:12px; font-weight:700; color:var(--oc-accent); background:var(--oc-tag-bg); border-radius:100px; padding:5px 12px; }
 .marca-alfa .cond-label{ font-family:'Inter',sans-serif; }
+
+/* Faixa de números com entrada/parcelas compostas */
+.oferta-statstrip.strip-comp{ grid-template-columns: 1.45fr 1.45fr 0.7fr; }
+.oferta-stat .value.comp{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:6px 8px; }
+.comp-parte{ display:flex; flex-direction:column; gap:3px; }
+.comp-leg{ font-family:'Inter',sans-serif; font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--oc-ink-dim); white-space:nowrap; }
+.comp-val{ white-space:nowrap; }
+.comp-mais{ color:var(--oc-accent); font-weight:700; padding-bottom:1px; }
+.oferta-stat .stat-sub{ font-size:10.5px; color:var(--oc-ink-dim); margin-top:6px; }
+@media (max-width: 480px){ .oferta-statstrip.strip-comp{ grid-template-columns: 1fr 1fr; } }
