@@ -206,7 +206,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '20/10 · 17h30';
+  const VERSAO = '20/10 · 18h';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -610,7 +610,9 @@
           <div class="oferta-title-sub">${varias ? a.cotas.length + ' cotas da ' + esc(a.adm) + ' em uma só proposta' : esc(a.adm)}</div>
           ${condicoesHTML(a)}
           <div class="oferta-statstrip">
-            <div class="oferta-stat"><div class="label">Prazo</div><div class="value">${a.prazo} meses</div></div>
+            <div class="oferta-stat"><div class="label">Entrada${a.entradaParcelada > 0 ? ' à vista' : ''}</div><div class="value">${BRL(a.entradaFinal)}</div></div>
+            <div class="oferta-stat"><div class="label">${M.periodosCliente(a).length > 1 ? 'Parcela inicial' : 'Parcela mensal'}</div><div class="value">${BRL((M.periodosCliente(a)[0] || { valor: a.parcelaInicial }).valor)}</div></div>
+            <div class="oferta-stat"><div class="label">Parcelas</div><div class="value">${a.prazo}x</div></div>
             <div class="oferta-stat"><div class="label">Taxa mensal</div><div class="value">${fmtTaxa(a.taxaMensal)}</div></div>
             <div class="oferta-stat"><div class="label">Fundo de reserva</div><div class="value fr-value">${BRL(a.fundoReserva)}</div><div class="fr-badge">↩ de retorno</div></div>
           </div>
@@ -626,18 +628,17 @@
   function condicoesHTML(a) {
     const oport = a.entradaParcelada > 0;
     const per = M.periodosCliente(a);
-    const entrada = oport
-      ? `<div class="cond-bloco"><div class="cond-label">Entrada parcelada</div><div class="cond-entrada">${[`1x de ${BRL(a.entradaFinal)}`].concat(a.faixasEntrada.map((f) => `${f.n}x de ${BRL(f.v)}`)).join('<span class="cond-mais"> + </span>')}</div></div>`
-      : `<div class="cond-bloco"><div class="cond-label">Entrada</div><div class="cond-entrada">${BRL(a.entradaFinal)}</div></div>`;
-    const parcelas = per.length === 1
-      ? `<div class="cond-linha"><span class="cond-per">${a.prazo}x de</span><span class="cond-val">${BRL(per[0].valor)}</span></div>`
-      : per.map((p) => `<div class="cond-linha"><span class="cond-per">${M.textoPeriodo(p)}</span><span class="cond-val">${BRL(p.valor)}</span></div>`).join('');
-    return `
-      <div class="cond">
-        ${entrada}
-        <div class="cond-bloco"><div class="cond-label">Parcelas</div>${parcelas}
-          ${oport ? '<div class="cond-aviso">Parcelas da entrada já incluídas</div>' : ''}</div>
-      </div>`;
+    if (!oport && per.length <= 1) return ''; // carta simples: só a faixa de números
+    let h = '<div class="oferta-faixas">';
+    if (oport) {
+      h += `<div class="row"><span>Entrada parcelada</span><strong>${M.textoEntradaParcelada(a)}</strong></div>`;
+    }
+    if (per.length > 1) {
+      h += `<div class="ttl"${oport ? ' style="margin-top:14px;"' : ''}>Parcelas</div>`;
+      h += per.map((p) => `<div class="row"><span>${M.textoPeriodo(p)}</span><strong>${BRL(p.valor)}</strong></div>`).join('');
+    }
+    if (oport) h += '<div class="faixas-aviso">Parcelas da entrada já incluídas</div>';
+    return h + '</div>';
   }
   function comparativoHTML(id) {
     return `<div class="oferta-comparativo" data-comp-id="${id}">
