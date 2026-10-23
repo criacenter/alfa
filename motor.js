@@ -72,7 +72,8 @@
     lume: { nome: 'LuME', modo: 'substituir' },
     uni: { nome: 'UniContemplados', modo: 'substituir' },
     fraga: { nome: 'Fraga e Bitello', modo: 'substituir' },
-    rafael: { nome: 'Rafael Holanda', modo: 'somar', semJuncao: true, validadeDias: 7 }
+    rafael: { nome: 'Rafael Holanda', art: 'do', modo: 'somar', semJuncao: true, validadeDias: 7 },
+    lr: { nome: 'LR Contemplados', art: 'da', modo: 'somar', semJuncao: true, validadeDias: 7 }
   };
   const TIPOS = { veiculo: 'Veículos', imovel: 'Imóveis' };
 
@@ -252,8 +253,9 @@
   function validarJuncao(cotas) {
     if (!cotas.length) return 'Escolha ao menos uma carta.';
     if (cotas.length > 1) {
-      if (cotas.some((c) => FORNECEDORES[c.fornecedor] && FORNECEDORES[c.fornecedor].semJuncao))
-        return 'Cartas do ' + FORNECEDORES.rafael.nome + ' nunca são combinadas — ofereça sozinha.';
+      const solo = cotas.find((c) => FORNECEDORES[c.fornecedor] && FORNECEDORES[c.fornecedor].semJuncao);
+      if (solo) return 'Cartas ' + (FORNECEDORES[solo.fornecedor].art || 'do') + ' ' + FORNECEDORES[solo.fornecedor].nome + ' nunca são combinadas — ofereça sozinha.';
+      if (cotas.some(ehOportunidade) && !cotas.every(ehOportunidade)) return 'Carta Oportunidade só pode ser combinada com outra carta Oportunidade.';
       const f = cotas[0].fornecedor, a = cotas[0].adm, t = cotas[0].tipo;
       if (cotas.some((c) => c.fornecedor !== f)) return 'Junção só com cartas do mesmo fornecedor.';
       if (cotas.some((c) => c.adm !== a)) return 'Junção só com cartas da mesma administradora.';
@@ -349,7 +351,8 @@
     const grupos = {};
     elegiveis.forEach((c) => {
       const semJ = FORNECEDORES[c.fornecedor] && FORNECEDORES[c.fornecedor].semJuncao;
-      const chave = semJ ? 'solo|' + (c.id || assinatura(c)) : c.fornecedor + '|' + c.adm;
+      // Oportunidade só junta com Oportunidade: ficam num grupo separado
+      const chave = semJ ? 'solo|' + (c.id || assinatura(c)) : c.fornecedor + '|' + c.adm + '|' + (ehOportunidade(c) ? 'op' : 'n');
       (grupos[chave] = grupos[chave] || []).push(c);
     });
     const alvo = q.credito || 0;
@@ -684,7 +687,7 @@
   function tipoDoCabecalho(t) {
     const s = semAcento(t);
     if (/imovel|imoveis|imobiliario/.test(s)) return 'imovel';
-    if (/automovel|veiculo|moto|caminhao|pesado|maquina|carro|leve/.test(s)) return 'veiculo';
+    if (/automove|veiculo|moto|caminh|pesado|maquina|carro|leve/.test(s)) return 'veiculo';
     return '';
   }
   function lerRafael(texto) {
@@ -753,10 +756,60 @@
     if (fornecedor === 'uni') return lerUni(texto, tipo);
     if (fornecedor === 'fraga') return lerFraga(texto, tipo, opcoes && opcoes.admPadrao);
     if (fornecedor === 'rafael') return lerRafael(texto);
+    if (fornecedor === 'lr') return lerLR(texto);
     return { cartas: [], ignoradas: ['Fornecedor desconhecido'] };
   }
 
-  // Rafael: cartas somam ao estoque, repetidas só renovam a data, e saem sozinhas após 7 dias
+  // LR Contemplados (WhatsApp): linha da administradora ("🔴 MYCON"), linha do tipo ("🚘 AUTOMÓVEIS"),
+  // depois cada carta: "1️⃣ CRÉDITO: R$ ..." / "💰 ENTRADA: R$ ..." / "📄 PARCELAS: 27x R$ ... + 24x R$ ..."
+  function lerLR(texto) {
+    const cartas = [], ignoradas = [];
+    let tipo = '', adm = '', atual = null, anterior = '';
+    const conhecida = (txt) => { const a = canonAdm(txt); return ADMS.some((x) => x.nome === a) ? a : ''; };
+    const fechar = () => {
+      if (!atual) return;
+      if (cartaValida(atual) && atual.tipo && atual.adm) cartas.push(atual);
+      else ignoradas.push('Carta de ' + formatBRL(atual.credito) + (atual.adm ? ' (' + atual.adm + ')' : '') + (atual.tipo ? '' : ' — sem tipo (automóvel/imóvel)') + ' — confira os dados');
+      atual = null;
+    };
+    String(texto).split(/\r?\n/).forEach((bruta) => {
+      const linha = bruta.trim();
+      if (!linha) return;
+      const limpa = linha.replace(/[^\p{L}\p{N}\s$:.,+\-–/|]/gu, ' ').replace(/\s+/g, ' ').trim();
+      let m = limpa.match(/cr[ée]dito\s*:?\s*(R\$\s*[\d.,]+)/i);
+      if (m) { fechar(); atual = novaCarta('lr', tipo, { adm, credito: parseBR(m[1]) }); anterior = ''; return; }
+      m = limpa.match(/entrada\s*:?\s*(R\$\s*[\d.,]+)(.*)$/i);
+      if (m && atual) {
+        atual.entrada = parseBR(m[1]);
+        let p; RE_PARC.lastIndex = 0;
+        while ((p = RE_PARC.exec(m[2]))) atual.entradaParcelas.push({ n: parseInt(p[1], 10), v: parseBR(p[2]) });
+        if (atual.entradaParcelas.length) atual.obs.push('Oportunidade');
+        return;
+      }
+      m = limpa.match(/parcelas?\s*:?\s*(.*)$/i);
+      if (m && atual && /\d\s*[xX]/.test(m[1])) {
+        let p; RE_PARC.lastIndex = 0;
+        while ((p = RE_PARC.exec(m[1]))) atual.etapas.push({ n: parseInt(p[1], 10), v: parseBR(p[2]) });
+        return;
+      }
+      if (/R\$/.test(limpa)) { if (atual) atual.obs.push(limpa); return; }
+      // linha curta de tipo ("AUTOMÓVEIS", "IMÓVEIS", "MOTOS", "CAMINHÕES")
+      const palavras = limpa.split(' ').filter(Boolean);
+      const t = palavras.length <= 3 ? tipoDoCabecalho(limpa) : '';
+      if (t) {
+        fechar(); tipo = t;
+        if (!conhecida(anterior) && anterior && anterior.split(' ').length <= 3) adm = canonAdm(anterior); // adm desconhecida logo antes do tipo
+        anterior = ''; return;
+      }
+      const a = palavras.length <= 4 ? conhecida(limpa) : '';
+      if (a) { fechar(); adm = a; anterior = ''; return; }
+      if (!atual) anterior = limpa;
+    });
+    fechar();
+    return { cartas, ignoradas };
+  }
+
+  // Fornecedores por WhatsApp (Rafael, LR): cartas somam ao estoque, repetidas só renovam a data, e saem sozinhas após 7 dias
   function mesclarRafael(existentes, novas, agoraISO) {
     const mapa = new Map(existentes.map((c) => [assinatura(c), c]));
     let adicionadas = 0, renovadas = 0;
@@ -768,8 +821,11 @@
     return { cartas: [...mapa.values()], adicionadas, renovadas };
   }
   function expirarRafael(cartas, agora) {
-    const lim = (agora || Date.now()) - FORNECEDORES.rafael.validadeDias * 86400000;
-    return cartas.filter((c) => c.fornecedor !== 'rafael' || !c.criadoEm || Date.parse(c.criadoEm) >= lim);
+    return cartas.filter((c) => {
+      const f = FORNECEDORES[c.fornecedor];
+      if (!f || !f.validadeDias || !c.criadoEm) return true;
+      return Date.parse(c.criadoEm) >= (agora || Date.now()) - f.validadeDias * 86400000;
+    });
   }
 
   const Motor = {
@@ -780,7 +836,7 @@
     precoPadrao, precificacaoJairo, precificacaoAlfa, precificar, fundoReserva, taxaMensalLinear, tirMensal,
     avaliar, validarJuncao, OBJETIVOS, cartasDoSegmento, buscar, textoProposta, periodosCliente, textoPeriodo, textoEntradaParcelada,
     DIV_FAIXAS, SEG_COM_PROMO, PROMO_POR_SEGMENTO, segmentosDivulgacao, precoDivulgacao, itemDivulgacao, selecionarDivulgacao,
-    lerLume, lerUni, lerFraga, lerRafael, lerLista, mesclarRafael, expirarRafael, cartaValida
+    lerLume, lerUni, lerFraga, lerRafael, lerLR, lerLista, mesclarRafael, expirarRafael, cartaValida
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = Motor;
   else root.Motor = Motor;

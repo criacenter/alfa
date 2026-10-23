@@ -206,7 +206,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '21/10 · 16h';
+  const VERSAO = '22/10 · 22h';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -268,15 +268,17 @@
       const snap = await fb.getDocs(fb.collection(fb.db, 'base'));
       LOTES = {};
       snap.forEach((d) => { LOTES[d.id] = d.data(); });
-      // Rafael: cartas com mais de 7 dias saem sozinhas
-      for (const t of Object.keys(M.TIPOS)) {
-        const k = chaveLote('rafael', t);
-        if (!LOTES[k]) continue;
-        const antes = LOTES[k].cartas || [];
-        const depois = M.expirarRafael(antes);
-        if (depois.length !== antes.length) {
-          LOTES[k].cartas = depois;
-          if (podeBase()) { try { await salvarLote('rafael', t, depois, true); } catch (e) {} }
+      // Fornecedores por WhatsApp (Rafael, LR): cartas com mais de 7 dias saem sozinhas
+      for (const f of Object.keys(M.FORNECEDORES).filter((x) => M.FORNECEDORES[x].validadeDias)) {
+        for (const t of Object.keys(M.TIPOS)) {
+          const k = chaveLote(f, t);
+          if (!LOTES[k]) continue;
+          const antes = LOTES[k].cartas || [];
+          const depois = M.expirarRafael(antes);
+          if (depois.length !== antes.length) {
+            LOTES[k].cartas = depois;
+            if (podeBase()) { try { await salvarLote(f, t, depois, true); } catch (e) {} }
+          }
         }
       }
       montarBase();
@@ -322,10 +324,11 @@
   $('baseAdmPadrao').innerHTML = admOptions('HS Consórcios');
   function ajustarPassos() {
     const f = $('baseForn').value;
-    $('baseTipoWrap').hidden = f === 'rafael';
+    const somar = M.FORNECEDORES[f].modo === 'somar';
+    $('baseTipoWrap').hidden = somar;
     $('baseAdmWrap').hidden = f !== 'fraga';
-    $('baseModoInfo').textContent = f === 'rafael'
-      ? 'As cartas do Rafael somam ao que já existe e saem sozinhas 7 dias depois. O tipo vem do cabeçalho da mensagem.'
+    $('baseModoInfo').textContent = somar
+      ? 'As cartas ' + (M.FORNECEDORES[f].art || 'do') + ' ' + M.FORNECEDORES[f].nome + ' somam ao que já existe e saem sozinhas 7 dias depois. A administradora e o tipo vêm da própria mensagem.'
       : 'A lista nova substitui só ' + M.FORNECEDORES[f].nome + ' · ' + M.TIPOS[$('baseTipo').value] + '.';
     $('basePrevia').innerHTML = '';
   }
@@ -345,7 +348,7 @@
   function renderPrevia() {
     const p = PREVIA; const box = $('basePrevia');
     const nOp = p.cartas.filter(M.ehOportunidade).length;
-    const ehRafael = p.forn === 'rafael';
+    const ehRafael = M.FORNECEDORES[p.forn].modo === 'somar'; // fornecedor por WhatsApp (Rafael, LR)
     let h = `<div class="message ${p.cartas.length ? 'ok' : 'warn'}" style="margin-bottom:12px;"><strong>${p.cartas.length} cartas lidas</strong>${nOp ? ' · ' + nOp + ' Oportunidade' : ''}. Confira e ajuste o que precisar antes de salvar.</div>`;
     if (p.ignoradas.length) h += `<div class="message warn" style="margin-bottom:12px;"><strong>${p.ignoradas.length} trecho(s) não reconhecido(s)</strong> — confira se falta alguma carta (dá para adicionar à mão depois):<div class="texto-copia">${p.ignoradas.map(esc).join('\n')}</div></div>`;
     if (p.cartas.length) {
@@ -363,7 +366,7 @@
           <td><button class="rm-btn pv-rm" title="Tirar da lista">×</button></td></tr>`;
       });
       h += '</tbody></table></div>';
-      const destino = ehRafael ? 'Adicionar ao estoque do Rafael Holanda' : `Salvar e substituir ${M.FORNECEDORES[p.forn].nome} · ${M.TIPOS[p.tipo]}`;
+      const destino = ehRafael ? 'Adicionar ao estoque ' + (M.FORNECEDORES[p.forn].art || 'do') + ' ' + M.FORNECEDORES[p.forn].nome : `Salvar e substituir ${M.FORNECEDORES[p.forn].nome} · ${M.TIPOS[p.tipo]}`;
       h += `<div class="btn-row" style="margin-top:14px;"><span class="section-sub" style="margin:0;">${ehRafael ? 'Cartas repetidas só renovam a data.' : 'Hoje existem ' + ((LOTES[chaveLote(p.forn, p.tipo)] || {}).cartas || []).length + ' cartas nessa lista; elas serão trocadas por estas.'}</span>
         <button class="btn primary" id="btnSalvarPrevia">${destino}</button></div><div class="form-msg" id="previaMsg"></div>`;
     }
@@ -388,15 +391,15 @@
     const b = $('btnSalvarPrevia'); b.disabled = true; b.textContent = 'Salvando...';
     try {
       const agora = new Date().toISOString();
-      if (p.forn === 'rafael') {
+      if (M.FORNECEDORES[p.forn].modo === 'somar') {
         let txt = [];
         for (const t of Object.keys(M.TIPOS)) {
           const novas = p.cartas.filter((c) => c.tipo === t);
           if (!novas.length) continue;
-          const exist = M.expirarRafael(((LOTES[chaveLote('rafael', t)] || {}).cartas) || []);
+          const exist = M.expirarRafael(((LOTES[chaveLote(p.forn, t)] || {}).cartas) || []);
           const r = M.mesclarRafael(exist, novas, agora);
-          r.cartas.forEach((c, i) => { if (!c.id) c.id = novoId('rafael', t, i); });
-          await salvarLote('rafael', t, r.cartas, true);
+          r.cartas.forEach((c, i) => { if (!c.id) c.id = novoId(p.forn, t, i); });
+          await salvarLote(p.forn, t, r.cartas, true);
           txt.push(`${M.TIPOS[t]}: ${r.adicionadas} nova(s), ${r.renovadas} renovada(s)`);
         }
         montarBase();
@@ -415,8 +418,9 @@
     if (M.ehOportunidade(c)) s += '<span class="selo verde">Oportunidade</span>';
     if (c.codigo) s += `<span class="selo cinza">cota ${esc(c.codigo)}</span>`;
     (c.obs || []).filter((o) => !/oportunidade/i.test(o)).forEach((o) => { s += `<span class="selo">${esc(o)}</span>`; });
-    if (c.fornecedor === 'rafael' && c.criadoEm) {
-      const dias = Math.max(0, 7 - Math.floor((Date.now() - Date.parse(c.criadoEm)) / 86400000));
+    const val = M.FORNECEDORES[c.fornecedor] && M.FORNECEDORES[c.fornecedor].validadeDias;
+    if (val && c.criadoEm) {
+      const dias = Math.max(0, val - Math.floor((Date.now() - Date.parse(c.criadoEm)) / 86400000));
       s += `<span class="selo cinza">sai em ${dias} dia${dias === 1 ? '' : 's'}</span>`;
     }
     return s;

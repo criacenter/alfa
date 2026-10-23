@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" href="assets/favicon_jairo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="stylesheet" href="style.css?v=9">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -156,7 +156,7 @@
       <div id="manualWrap" hidden>
         <div class="stock-card">
           <div class="section-title" style="font-size:17px;">Montar manualmente</div>
-          <div class="section-sub">Marque as cartas e a ferramenta calcula. Junção só com cartas do mesmo fornecedor e da mesma administradora; cartas do Rafael Holanda vão sempre sozinhas.</div>
+          <div class="section-sub">Marque as cartas e a ferramenta calcula. Junção só com cartas do mesmo fornecedor e da mesma administradora; carta Oportunidade só junta com outra Oportunidade; cartas do Rafael Holanda e da LR Contemplados vão sempre sozinhas.</div>
           <div class="filtros">
             <select class="sel" id="mFornecedor"></select>
             <select class="sel" id="mAdm"></select>
@@ -278,7 +278,7 @@
     window.__fbRes(Object.assign({}, appMod, authMod, fsMod, { app, auth: authMod.getAuth(app), db: fsMod.getFirestore(app) }));
   } catch (e) { console.error(e); window.__fbRej(e); }
 </script>
-<script src="motor.js?v=8"></script>
-<script src="app.js?v=8"></script>
+<script src="motor.js?v=9"></script>
+<script src="app.js?v=9"></script>
 </body>
 </html>
