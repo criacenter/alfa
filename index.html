@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" href="assets/favicon_jairo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=10">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -122,6 +122,16 @@
       </div>
 
       <!-- Precificação: só aparece para quem usa a regra Jairo -->
+      <!-- Ágio: só aparece para quem usa a regra Alfa -->
+      <div class="field so-regra-alfa" style="margin-bottom:22px; max-width:420px;" hidden>
+        <label for="bAgio">Ágio sobre o crédito</label>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <div class="input-row" style="flex:1;"><span class="prefix">%</span><input type="text" inputmode="decimal" id="bAgio" value="7"></div>
+          <button type="button" class="btn sm" id="bAgioReset">Voltar para 7%</button>
+        </div>
+        <div class="hint">Entra na entrada de todas as opções: entrada do fornecedor + este percentual do crédito.</div>
+        <div class="hint" id="bAgioAviso" style="color:var(--danger-bright);"></div>
+      </div>
       <div class="field prec-field so-regra-jairo" id="prec-busca" style="margin-bottom:22px;">
         <label>Precificação</label>
         <div class="prec-row">
@@ -278,7 +288,7 @@
     window.__fbRes(Object.assign({}, appMod, authMod, fsMod, { app, auth: authMod.getAuth(app), db: fsMod.getFirestore(app) }));
   } catch (e) { console.error(e); window.__fbRej(e); }
 </script>
-<script src="motor.js?v=9"></script>
-<script src="app.js?v=9"></script>
+<script src="motor.js?v=10"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>

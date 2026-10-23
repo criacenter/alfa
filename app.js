@@ -206,7 +206,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '22/10 · 22h';
+  const VERSAO = '23/10 · 11h';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -214,6 +214,8 @@
     document.querySelectorAll('.so-admin').forEach((el) => { el.hidden = !ehAdmin(); });
     document.querySelectorAll('.so-base').forEach((el) => { el.hidden = !podeBase(); });
     document.querySelectorAll('.so-regra-jairo').forEach((el) => { el.hidden = regraEU() !== 'jairo'; });
+    document.querySelectorAll('.so-regra-alfa').forEach((el) => { el.hidden = regraEU() !== 'alfa'; });
+    try { const g = localStorage.getItem('alfa_agio_' + (EU.uid || '')); if (g) $('bAgio').value = g; } catch (e) {}
   }
 
   /* ---------------- Abas ---------------- */
@@ -726,6 +728,19 @@
   $('bObjetivo').addEventListener('change', ajustarObjetivo);
   ajustarObjetivo();
 
+  // Parâmetros de preço de quem está usando: faixas (regra Jairo) ou ágio em % (regra Alfa)
+  function agioAtual() {
+    const v = num($('bAgio').value);
+    return v >= 0 && v <= 30 && $('bAgio').value.trim() !== '' ? v : M.AGIO_ALFA_PCT;
+  }
+  function paramsPreco() { return regraEU() === 'jairo' ? PREC.get() : { agioPct: agioAtual() }; }
+  $('bAgio').addEventListener('input', () => {
+    const v = $('bAgio').value.trim();
+    $('bAgioAviso').textContent = v === '' || (num(v) >= 0 && num(v) <= 30) ? '' : 'Use um valor entre 0 e 30. Enquanto isso, vale 7%.';
+    try { localStorage.setItem('alfa_agio_' + (EU && EU.uid || ''), v); } catch (e) {}
+  });
+  $('bAgioReset').addEventListener('click', () => { $('bAgio').value = String(M.AGIO_ALFA_PCT); $('bAgio').dispatchEvent(new Event('input')); });
+
   let OPCOES = [];
   $('btnBuscar').addEventListener('click', () => {
     $('manualWrap').hidden = true;
@@ -734,7 +749,7 @@
       entradaAlvo: num($('bEntAlvo').value), parcelaAlvo: num($('bParcAlvo').value),
       entradaMax: num($('bEntMax').value), parcelaMax: num($('bParcMax').value),
       tolerancia: Math.min(Math.max(num($('bTol').value) || 15, 1), 60) / 100, qtd: +$('bQtd').value,
-      regra: regraEU(), params: regraEU() === 'jairo' ? PREC.get() : undefined
+      regra: regraEU(), params: paramsPreco()
     };
     const out = $('buscaResultados');
     if (!BASE.length) { out.innerHTML = '<div class="message warn">A base de cartas está vazia.</div>'; return; }
@@ -783,7 +798,7 @@
       linhas.push(['Comissão' + (q && q.params && q.params.parceiro ? ' (com parceiro)' : ''), '+ ' + BRL(p.comissao)]);
       linhas.push(['Divisão da comissão', 'Alpha ' + BRL(p.split.alpha) + ' · Jairo ' + BRL(p.split.jairo) + (p.split.parceiro ? ' · Parceiro ' + BRL(p.split.parceiro) : '')]);
     } else {
-      linhas.push(['Ágio (' + M.AGIO_ALFA_PCT + '% do crédito)', '+ ' + BRL(p.acrescimo)]);
+      linhas.push(['Ágio (' + String(p.agioPct).replace('.', ',') + '% do crédito)', '+ ' + BRL(p.acrescimo)]);
       linhas.push(['Taxa de transferência (paga à parte)', BRL(a.transferenciaAParte)]);
     }
     linhas.push(['Entrada final' + (a.entradaParcelada > 0 ? ' (à vista)' : ''), BRL(a.entradaFinal) + ' · ' + pct(a.pctEntrada) + ' do crédito']);
@@ -877,10 +892,10 @@
     const cs = cotasManual();
     const erro = M.validarJuncao(cs);
     if (erro) { $('buscaResultados').innerHTML = `<div class="message warn">${esc(erro)}</div>`; return; }
-    const a = M.avaliar(cs, { regra: regraEU(), params: regraEU() === 'jairo' ? PREC.get() : undefined, segmento: $('bSeg').value });
+    const a = M.avaliar(cs, { regra: regraEU(), params: paramsPreco(), segmento: $('bSeg').value });
     a.compartilhaCom = [];
     OPCOES = [a];
-    $('buscaResultados').innerHTML = '<div class="section-sub" style="margin-bottom:14px;">Cálculo das cartas escolhidas</div>' + opcaoHTML(a, 0, { credito: 0, params: regraEU() === 'jairo' ? PREC.get() : null }, '');
+    $('buscaResultados').innerHTML = '<div class="section-sub" style="margin-bottom:14px;">Cálculo das cartas escolhidas</div>' + opcaoHTML(a, 0, { credito: 0, params: paramsPreco() }, '');
     ligarOpcoes();
     $('buscaResultados').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });

@@ -186,13 +186,15 @@
       comissao, faixas: faixasCom, split, transferenciaAParte: 0 };
   }
   // Regra Alfa: entrada + 7% do crédito; transferência de 1% informada à parte
-  function precificacaoAlfa(credito, entradaForn) {
-    const agio = credito * AGIO_ALFA_PCT / 100;
-    return { regra: 'alfa', acrescimo: agio, entradaFinal: entradaForn + agio,
+  // Regra Alfa: entrada + ágio (7% por padrão; cada usuário pode ajustar o percentual na busca)
+  function precificacaoAlfa(credito, entradaForn, params) {
+    const pctAgio = params && params.agioPct != null && isFinite(params.agioPct) ? params.agioPct : AGIO_ALFA_PCT;
+    const agio = credito * pctAgio / 100;
+    return { regra: 'alfa', agioPct: pctAgio, acrescimo: agio, entradaFinal: entradaForn + agio,
       transferenciaAParte: credito * TRANSFERENCIA_PCT / 100 };
   }
   function precificar(credito, entradaForn, regra, params) {
-    return regra === 'alfa' ? precificacaoAlfa(credito, entradaForn) : precificacaoJairo(credito, entradaForn, params);
+    return regra === 'alfa' ? precificacaoAlfa(credito, entradaForn, params) : precificacaoJairo(credito, entradaForn, params);
   }
   function fundoReserva(credito) { return credito > 0 ? credito * FR_FATOR * FR_PCT / 100 : 0; }
 
