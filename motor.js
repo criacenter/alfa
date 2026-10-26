@@ -527,6 +527,8 @@
     return {
       carta: c, seg, entradaFinal: pr.res.entradaFinal, entradaCheia: pr.resCheio.entradaFinal, economia: pr.economia,
       pctEntrada: pr.res.entradaFinal / c.credito * 100, parcela: et.v, prazo: pz,
+      parcelaMax: Math.max(0, ...(c.etapas || []).map((e) => e.v)),
+      pctParcela: Math.max(0, ...(c.etapas || []).map((e) => e.v)) / c.credito * 100,
       entradaParcelas: c.entradaParcelas || [], entradaTotal: pr.res.entradaFinal + somaNV(c.entradaParcelas), vencimento: c.vencimento || '',
       taxaMensal: taxaMensalLinear(c.credito, pr.res.entradaFinal, saldoDevedor(c) + somaNV(c.entradaParcelas), pz),
       fundoReserva: fundoReserva(c.credito)
@@ -540,8 +542,12 @@
     if (c.credito <= 235000 || c.adm !== ADM_CAIXA) return 'pesados';
     return 'maquinas';
   }
-  function selecionarDivulgacao(base) {
+  // Parcela máxima da divulgação, em % do crédito (a maior parcela da carta tem de caber)
+  const PARCELA_PCT_PADRAO = { motos: 2.5, solar: 2.5, leves: 2.5, implementos: 2.5, pesados: 2.5, maquinas: 2.5, imoveis: 1.0 };
+  function selecionarDivulgacao(base, opcoes) {
+    const tetoParc = Object.assign({}, PARCELA_PCT_PADRAO, (opcoes && opcoes.parcelaPct) || {});
     const porSeg = {};
+    let foraParcela = 0;
     const oportunidades = [];
     base.forEach((c) => {
       const segs = segmentosDivulgacao(c);
@@ -552,7 +558,9 @@
       }
       segs.forEach((seg) => {
         const it = itemDivulgacao(c, seg);
-        if (it.pctEntrada < TETO_PCT) (porSeg[seg] = porSeg[seg] || []).push(it);
+        if (it.pctEntrada >= TETO_PCT) return;
+        if (tetoParc[seg] > 0 && it.pctParcela > tetoParc[seg] + 1e-9) { foraParcela++; return; }
+        (porSeg[seg] = porSeg[seg] || []).push(it);
       });
     });
     const out = {};
@@ -566,7 +574,7 @@
       const normal = lista.filter((it) => !promoSet.has(it)).sort((a, b) => a.pctEntrada - b.pctEntrada);
       if (promo.length || normal.length) out[seg] = { promo, normal };
     });
-    return { segmentos: out, oportunidades };
+    return { segmentos: out, oportunidades, foraParcela, tetoParc };
   }
 
   /* ---------------- Leitura das listas dos fornecedores ---------------- */
@@ -837,7 +845,7 @@
     SEGMENTOS, FAIXAS_LIMITES, TAXAS_PADRAO, TRANSFERENCIA_PCT, TETO_PCT, AGIO_ALFA_PCT,
     precoPadrao, precificacaoJairo, precificacaoAlfa, precificar, fundoReserva, taxaMensalLinear, tirMensal,
     avaliar, validarJuncao, OBJETIVOS, cartasDoSegmento, buscar, textoProposta, periodosCliente, textoPeriodo, textoEntradaParcelada,
-    DIV_FAIXAS, SEG_COM_PROMO, PROMO_POR_SEGMENTO, segmentosDivulgacao, precoDivulgacao, itemDivulgacao, selecionarDivulgacao,
+    DIV_FAIXAS, SEG_COM_PROMO, PARCELA_PCT_PADRAO, PROMO_POR_SEGMENTO, segmentosDivulgacao, precoDivulgacao, itemDivulgacao, selecionarDivulgacao,
     lerLume, lerUni, lerFraga, lerRafael, lerLR, lerLista, mesclarRafael, expirarRafael, cartaValida
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = Motor;

@@ -206,7 +206,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '23/10 · 11h';
+  const VERSAO = '26/10 · 15h30';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -1072,7 +1072,7 @@
       s.promo.forEach((it) => { total++; if (COPIADOS && COPIADOS[chaveDiv(it, 'p')]) ja++; });
       s.normal.forEach((it) => { total++; if (COPIADOS && COPIADOS[chaveDiv(it, 'n')]) ja++; }); });
     if (DIV) DIV.oportunidades.forEach((it) => { total++; if (COPIADOS && COPIADOS[chaveDiv(it, 'o')]) ja++; });
-    $('divResumo').textContent = (total ? `${total} cards prontos · ${ja} já copiado${ja === 1 ? '' : 's'}` + (DIV.oportunidades.length ? ' (' + DIV.oportunidades.length + ' de Oportunidade)' : '') : '') + (AVISO_COPIADOS ? '  ' + AVISO_COPIADOS : '');
+    $('divResumo').textContent = (total ? `${total} cards prontos · ${ja} já copiado${ja === 1 ? '' : 's'}` + (DIV.oportunidades.length ? ' (' + DIV.oportunidades.length + ' de Oportunidade)' : '') : '') + (DIV && DIV.foraParcela ? ` · ${DIV.foraParcela} fora pela parcela` : '') + (AVISO_COPIADOS ? '  ' + AVISO_COPIADOS : '');
     return itens;
   }
   function itemDivHTML(it, modo, k) {
@@ -1084,14 +1084,43 @@
     const extra = modo === 'p' ? ' · economia ' + BRL(it.economia) : (modo === 'o' ? ' · entrada total ' + BRL(it.entradaTotal) + ' · clique na data para mudar a validade' : '');
     return `<div class="div-item${iso ? ' copiado' : ''}" data-chave="${esc(chave)}">${tag}<span class="slot-copiado">${iso ? tagCopiado(iso) : ''}</span>
       ${arteHTML(id, it, modo)}
-      <div class="meta">${M.FORNECEDORES[c.fornecedor] ? M.FORNECEDORES[c.fornecedor].nome : ''} · ${esc(c.adm)} · entrada ${pct(it.pctEntrada)}${extra}${c.codigo ? ' · cota ' + esc(c.codigo) : ''}</div>
+      <div class="meta">${M.FORNECEDORES[c.fornecedor] ? M.FORNECEDORES[c.fornecedor].nome : ''} · ${esc(c.adm)} · entrada ${pct(it.pctEntrada)} · parcela ${pct(it.pctParcela)}${extra}${c.codigo ? ' · cota ' + esc(c.codigo) : ''}</div>
       <button class="btn primary sm" data-copiar-art="${id}">${iso ? '📋 Copiar de novo' : '📋 Copiar imagem'}</button>
       <button class="desmarcar"${iso ? '' : ' hidden'}>desmarcar como copiado</button></div>`;
   }
+  // Parcela máxima por segmento (% do crédito): editável, salva no banco junto com a divulgação
+  let TETOS = null;
+  const NOMES_SEG = { motos: 'Motos', solar: 'Energia solar', leves: 'Veículos leves', implementos: 'Implementos', pesados: 'Caminhões', maquinas: 'Máquinas', imoveis: 'Imóveis' };
+  const fmtNum = (n) => String(n).replace('.', ',');
+  async function carregarTetos() {
+    if (TETOS) return;
+    TETOS = Object.assign({}, M.PARCELA_PCT_PADRAO);
+    try { const l = JSON.parse(localStorage.getItem('alfa_tetos') || 'null'); if (l) Object.assign(TETOS, l); } catch (e) {}
+    try { const fb = await fbx(); const s = await fb.getDoc(fb.doc(fb.db, 'divulgacao', 'config')); if (s.exists() && s.data().parcelaPct) Object.assign(TETOS, s.data().parcelaPct); } catch (e) {}
+    montarCamposTetos();
+  }
+  function montarCamposTetos() {
+    $('divTetosCampos').innerHTML = Object.keys(NOMES_SEG).map((k) => `<div class="field"><label for="teto-${k}">${NOMES_SEG[k]}</label><div class="input-row"><span class="prefix">%</span><input type="text" inputmode="decimal" id="teto-${k}" data-seg="${k}" value="${fmtNum(TETOS[k])}"></div></div>`).join('');
+    $('divTetosResumo').textContent = Object.keys(NOMES_SEG).map((k) => NOMES_SEG[k] + ' ' + fmtNum(TETOS[k]) + '%').join(' · ');
+  }
+  $('btnSalvarTetos').addEventListener('click', async () => {
+    const novos = {};
+    let erro = '';
+    document.querySelectorAll('#divTetosCampos input').forEach((i) => { const v = num(i.value); if (!(v > 0 && v <= 20)) erro = 'Use valores entre 0,1 e 20.'; novos[i.dataset.seg] = v; });
+    if (erro) { $('divTetosMsg').textContent = erro; return; }
+    TETOS = novos; montarCamposTetos();
+    try { localStorage.setItem('alfa_tetos', JSON.stringify(TETOS)); } catch (e) {}
+    try { const fb = await fbx(); await fb.setDoc(fb.doc(fb.db, 'divulgacao', 'config'), { parcelaPct: TETOS, atualizadoEm: new Date().toISOString() }); $('divTetosMsg').textContent = 'Salvo.'; }
+    catch (e) { $('divTetosMsg').textContent = 'Salvo só neste aparelho (' + traduzErro(e) + ').'; }
+    gerarDivulgacao();
+  });
+  $('btnTetosPadrao').addEventListener('click', () => { TETOS = Object.assign({}, M.PARCELA_PCT_PADRAO); montarCamposTetos(); $('divTetosMsg').textContent = 'Padrão restaurado. Clique em salvar para aplicar.'; });
+
   async function gerarDivulgacao() {
     if (!ehAdmin()) return;
     await carregarCopiados();
-    DIV = M.selecionarDivulgacao(BASE);
+    await carregarTetos();
+    DIV = M.selecionarDivulgacao(BASE, { parcelaPct: TETOS });
     const out = $('divResultados');
     let h = '', total = 0;
     ORDEM_SEG.forEach((seg) => {

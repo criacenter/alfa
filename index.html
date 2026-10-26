@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" href="assets/favicon_jairo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=12">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -218,8 +218,14 @@
     <!-- ===================== DIVULGAÇÃO ===================== -->
     <div class="panel-view" id="view-divulgacao">
       <div class="message info" style="margin-bottom:22px;">
-        <strong>Como funciona:</strong> a ferramenta varre a base e já traz os cards prontos. Entram só cartas com entrada abaixo de 35% e crédito dentro da faixa de cada segmento (motos e energia solar até R$ 40 mil; leves de R$ 70 a 150 mil; implementos de R$ 70 a 100 mil; caminhões de R$ 180 a 220 mil; máquinas de R$ 250 a 350 mil; imóveis de R$ 350 mil a R$ 1 milhão). Os 2 maiores descontos de cada segmento viram card promocional. Preço com parceiro e desconto progressivo.
+        <strong>Como funciona:</strong> a ferramenta varre a base e já traz os cards prontos. Entram só cartas com entrada abaixo de 35%, parcela dentro do limite do segmento e crédito dentro da faixa de cada segmento (motos e energia solar até R$ 40 mil; leves de R$ 70 a 150 mil; implementos de R$ 70 a 100 mil; caminhões de R$ 180 a 220 mil; máquinas de R$ 250 a 350 mil; imóveis de R$ 350 mil a R$ 1 milhão). Os 2 maiores descontos de cada segmento viram card promocional. Preço com parceiro e desconto progressivo.
       </div>
+      <details class="stock-card" id="divTetosBox" style="margin-bottom:22px;">
+        <summary style="cursor:pointer; font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:600;">Parcela máxima por segmento <span class="section-sub" id="divTetosResumo" style="margin:0 0 0 8px; font-family:Inter,sans-serif; font-size:12.5px; font-weight:400;"></span></summary>
+        <div class="section-sub" style="margin:12px 0 14px;">A maior parcela da carta tem de ficar até este percentual do crédito. Vale para os cards normais e promocionais; as Oportunidades entram todas.</div>
+        <div class="grid four" id="divTetosCampos" style="margin-bottom:14px;"></div>
+        <div class="btn-row" style="justify-content:flex-start;"><button class="btn primary sm" id="btnSalvarTetos">Salvar e atualizar cards</button><button class="btn sm" id="btnTetosPadrao">Voltar ao padrão</button><span class="section-sub" id="divTetosMsg" style="margin:0;"></span></div>
+      </details>
       <div class="btn-row" style="margin-bottom:22px;">
         <div class="div-controle"><button class="btn primary" id="btnGerarDiv">Atualizar cards</button><span class="section-sub" id="divResumo" style="margin:0;"></span></div>
         <div class="div-controle"><label><input type="checkbox" id="divOcultarCopiados"> Esconder os já copiados</label></div>
@@ -288,7 +294,7 @@
     window.__fbRes(Object.assign({}, appMod, authMod, fsMod, { app, auth: authMod.getAuth(app), db: fsMod.getFirestore(app) }));
   } catch (e) { console.error(e); window.__fbRej(e); }
 </script>
-<script src="motor.js?v=10"></script>
-<script src="app.js?v=10"></script>
+<script src="motor.js?v=12"></script>
+<script src="app.js?v=12"></script>
 </body>
 </html>
