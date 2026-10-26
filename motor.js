@@ -548,6 +548,10 @@
     const tetoParc = Object.assign({}, PARCELA_PCT_PADRAO, (opcoes && opcoes.parcelaPct) || {});
     const porSeg = {};
     let foraParcela = 0;
+    // Diagnóstico: por segmento, quantas cartas estavam na faixa e qual regra tirou cada uma
+    const diag = {};
+    const d = (seg) => (diag[seg] = diag[seg] || { naFaixa: 0, foraEntrada: 0, foraParcela: 0, entram: 0, entradaMin: Infinity });
+    let semFaixa = 0;
     const oportunidades = [];
     base.forEach((c) => {
       const segs = segmentosDivulgacao(c);
@@ -556,10 +560,13 @@
         (segs.length ? segs : [segmentoPadrao(c)]).forEach((seg) => oportunidades.push(itemDivulgacao(c, seg)));
         return;
       }
+      if (!segs.length) semFaixa++;
       segs.forEach((seg) => {
         const it = itemDivulgacao(c, seg);
-        if (it.pctEntrada >= TETO_PCT) return;
-        if (tetoParc[seg] > 0 && it.pctParcela > tetoParc[seg] + 1e-9) { foraParcela++; return; }
+        const g = d(seg); g.naFaixa++; g.entradaMin = Math.min(g.entradaMin, it.pctEntrada);
+        if (it.pctEntrada >= TETO_PCT) { g.foraEntrada++; return; }
+        if (tetoParc[seg] > 0 && it.pctParcela > tetoParc[seg] + 1e-9) { foraParcela++; g.foraParcela++; return; }
+        g.entram++;
         (porSeg[seg] = porSeg[seg] || []).push(it);
       });
     });
@@ -574,7 +581,7 @@
       const normal = lista.filter((it) => !promoSet.has(it)).sort((a, b) => a.pctEntrada - b.pctEntrada);
       if (promo.length || normal.length) out[seg] = { promo, normal };
     });
-    return { segmentos: out, oportunidades, foraParcela, tetoParc };
+    return { segmentos: out, oportunidades, foraParcela, tetoParc, diag, semFaixa };
   }
 
   /* ---------------- Leitura das listas dos fornecedores ---------------- */

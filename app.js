@@ -206,7 +206,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '26/10 · 15h30';
+  const VERSAO = '26/10 · 16h';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -1116,6 +1116,18 @@
   });
   $('btnTetosPadrao').addEventListener('click', () => { TETOS = Object.assign({}, M.PARCELA_PCT_PADRAO); montarCamposTetos(); $('divTetosMsg').textContent = 'Padrão restaurado. Clique em salvar para aplicar.'; });
 
+  // Quadro "Por que as cartas saíram": por segmento, quantas estavam na faixa e qual regra tirou cada uma
+  function diagnosticoHTML(D) {
+    const linhas = ORDEM_SEG.filter((seg) => D.diag[seg]).map((seg) => {
+      const g = D.diag[seg];
+      return `<tr><td>${ARTES[seg].nome}</td><td class="mono">${g.naFaixa}</td><td class="mono${g.foraEntrada ? '" style="color:var(--danger-bright);' : ''}">${g.foraEntrada}</td><td class="mono${g.foraParcela ? '" style="color:var(--danger-bright);' : ''}">${g.foraParcela}</td><td class="mono" style="color:var(--ok);">${g.entram}</td><td class="mono">${pct(g.entradaMin)}</td></tr>`;
+    }).join('');
+    return `<details class="stock-card" style="margin-bottom:22px;" open><summary style="cursor:pointer; font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:600;">Por que as cartas saíram</summary>
+      <div class="section-sub" style="margin:10px 0 12px;">Só cartas comuns (as Oportunidades entram todas). Uma carta da Caixa pode contar em dois segmentos. ${D.semFaixa} carta(s) da base estão fora de todas as faixas de crédito.</div>
+      <div class="table-wrap"><table class="data-table comp-table"><thead><tr><th>Segmento</th><th>Na faixa de crédito</th><th>Saíram pela entrada (35%)</th><th>Saíram pela parcela</th><th>Entram</th><th>Menor entrada da faixa</th></tr></thead>
+      <tbody>${linhas || '<tr><td colspan="6" class="lote-vazio">Nenhuma carta comum dentro das faixas de crédito.</td></tr>'}</tbody></table></div></details>`;
+  }
+
   async function gerarDivulgacao() {
     if (!ehAdmin()) return;
     await carregarCopiados();
@@ -1140,7 +1152,7 @@
       DIV.oportunidades.forEach((it, k) => { h += itemDivHTML(it, 'o', k); });
       h += '</div></div>';
     }
-    out.innerHTML = h || '<div class="message warn">Nenhuma carta da base entra nos critérios de divulgação agora.</div>';
+    out.innerHTML = diagnosticoHTML(DIV) + (h || '<div class="message warn">Nenhuma carta da base entra nos critérios de divulgação agora.</div>');
     resumoDiv();
     out.querySelectorAll('[data-mais]').forEach((b) => b.addEventListener('click', () => {
       const seg = b.dataset.mais, s = DIV.segmentos[seg];
