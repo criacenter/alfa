@@ -206,7 +206,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '03/11 · 22h20';
+  const VERSAO = '03/11 · 22h30';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -327,12 +327,13 @@
   function ajustarPassos() {
     const f = $('baseForn').value;
     const somar = M.FORNECEDORES[f].modo === 'somar';
-    $('baseTipoWrap').hidden = somar;
-    $('baseAdmWrap').hidden = f !== 'fraga';
+    // Fraga: a página traz administradora e categoria de cada carta; WhatsApp (Rafael, LR): vêm da mensagem
+    $('baseTipoWrap').hidden = somar || f === 'fraga';
+    $('baseAdmWrap').hidden = true;
     $('baseModoInfo').textContent = somar
       ? 'As cartas ' + (M.FORNECEDORES[f].art || 'do') + ' ' + M.FORNECEDORES[f].nome + ' somam ao que já existe e saem sozinhas 7 dias depois. A administradora e o tipo vêm da própria mensagem.'
       : f === 'fraga'
-        ? 'A página nova da Fraga já traz administradora e categoria de cada carta: a lista substitui só os tipos que vierem nela. Tipo e administradora acima só valem para o formato antigo.'
+        ? 'A página da Fraga já traz administradora e categoria de cada carta. A lista substitui só os tipos que vierem nela (Imóveis, Veículos ou os dois).'
         : 'A lista nova substitui só ' + M.FORNECEDORES[f].nome + ' · ' + M.TIPOS[$('baseTipo').value] + '.';
     $('basePrevia').innerHTML = '';
   }
@@ -342,7 +343,9 @@
 
   let PREVIA = null;
   $('btnLerLista').addEventListener('click', () => {
-    const forn = $('baseForn').value, tipo = $('baseTipo').value;
+    const forn = $('baseForn').value;
+    // Fraga no formato antigo (sem categoria): entra como Imóvel e HS, e dá para corrigir linha a linha na prévia
+    const tipo = forn === 'fraga' ? 'imovel' : $('baseTipo').value;
     const txt = $('baseTexto').value;
     if (!txt.trim()) { $('basePrevia').innerHTML = '<div class="message warn">Cole a lista antes.</div>'; return; }
     const r = M.lerLista(forn, txt, tipo, { admPadrao: $('baseAdmPadrao').value });
