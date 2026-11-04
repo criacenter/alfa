@@ -53,7 +53,9 @@
     { nome: 'Consórcio Servopa', chaves: ['servopa'], logo: 'assets/adm_logo_16.png' },
     { nome: 'Santander Consórcio', chaves: ['santander'], logo: 'assets/adm_logo_18.png' },
     { nome: 'Serello Consórcios', chaves: ['serello'], logo: 'assets/adm_logo_19.png' },
-    { nome: 'Rodobens', chaves: ['rodobens'], logo: 'assets/adm_logo_20.png' }
+    { nome: 'Rodobens', chaves: ['rodobens'], logo: 'assets/adm_logo_20.png' },
+    { nome: 'Sicredi Consórcios', chaves: ['sicredi'], logo: 'assets/adm_logo_sicredi.png' },
+    { nome: 'Zema Consórcio', chaves: ['zema'], logo: 'assets/adm_logo_zema.png' }
   ];
   const ADM_CAIXA = 'Caixa Consórcios';
   function canonAdm(txt) {
@@ -65,7 +67,8 @@
     // desconhecida: devolve o texto limpo (primeira letra maiúscula)
     return String(txt).replace(/[*_📄🚙🏠🏡]/g, '').trim().replace(/\s+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   }
-  function logoAdm(nome) { const a = ADMS.find((x) => x.nome === nome); return a ? a.logo : ''; }
+  // Aceita também nomes salvos antes da administradora entrar no cadastro (ex.: "Zema" → Zema Consórcio)
+  function logoAdm(nome) { const a = ADMS.find((x) => x.nome === nome) || ADMS.find((x) => x.nome === canonAdm(nome)); return a ? a.logo : ''; }
 
   /* ---------------- Fornecedores ---------------- */
   const FORNECEDORES = {
@@ -552,6 +555,7 @@
     const diag = {};
     const d = (seg) => (diag[seg] = diag[seg] || { naFaixa: 0, foraEntrada: 0, foraParcela: 0, entram: 0, entradaMin: Infinity });
     let semFaixa = 0;
+    const fora = {};
     const oportunidades = [];
     base.forEach((c) => {
       const segs = segmentosDivulgacao(c);
@@ -560,7 +564,18 @@
         (segs.length ? segs : [segmentoPadrao(c)]).forEach((seg) => oportunidades.push(itemDivulgacao(c, seg)));
         return;
       }
-      if (!segs.length) semFaixa++;
+      if (!segs.length) {
+        semFaixa++;
+        // onde estão as cartas fora das faixas (e quantas teriam entrada abaixo de 35%)
+        const lim = c.tipo === 'imovel' ? [[0, 200000], [200000, 350000], [1000000, Infinity]] : [[0, 40000], [40000, 70000], [150000, 180000], [220000, 250000], [250000, 350000], [350000, Infinity]];
+        const b = lim.find((x) => c.credito > x[0] && c.credito <= x[1]) || [0, 0];
+        const k = c.tipo + '|' + b[0] + '|' + b[1];
+        const segRef = c.tipo === 'imovel' ? 'imoveis' : (c.credito <= 70000 ? 'motos' : (c.credito <= 250000 ? 'pesados' : 'maquinas'));
+        const it = itemDivulgacao(c, segRef);
+        const g = (fora[k] = fora[k] || { tipo: c.tipo, min: b[0], max: b[1], total: 0, entrada35: 0, ambos: 0 });
+        g.total++;
+        if (it.pctEntrada < TETO_PCT) { g.entrada35++; if (it.pctParcela <= 2.5 + 1e-9 || (c.tipo === 'imovel' && it.pctParcela <= 1 + 1e-9)) g.ambos++; }
+      }
       segs.forEach((seg) => {
         const it = itemDivulgacao(c, seg);
         const g = d(seg); g.naFaixa++; g.entradaMin = Math.min(g.entradaMin, it.pctEntrada);
@@ -581,7 +596,7 @@
       const normal = lista.filter((it) => !promoSet.has(it)).sort((a, b) => a.pctEntrada - b.pctEntrada);
       if (promo.length || normal.length) out[seg] = { promo, normal };
     });
-    return { segmentos: out, oportunidades, foraParcela, tetoParc, diag, semFaixa };
+    return { segmentos: out, oportunidades, foraParcela, tetoParc, diag, semFaixa, fora: Object.values(fora).sort((a, b) => (a.tipo > b.tipo ? -1 : a.tipo < b.tipo ? 1 : a.min - b.min)) };
   }
 
   /* ---------------- Leitura das listas dos fornecedores ---------------- */
@@ -664,8 +679,59 @@
     return { cartas, ignoradas };
   }
 
-  // Fraga e Bitello: blocos começando pelo código da cota; "Taxa Grátis" antes do código é da carta seguinte
+  // Fraga e Bitello (página nova, nov/2026): blocos com rótulo e valor em linhas seguidas:
+  // Administradora / Bradesco / Categoria / Imóvel / Nº / 14704 / Crédito / R$ ... / Entrada / R$ ... / (33%) /
+  // Saldo Devedor / ... / Comissão / ... / Parcela / 153X de R$ 1.044,00 / TX / 1,56% / [Tempo de Parcelas / 1 à 133: R$ ...]
+  function lerFragaRotulos(texto, tipoPadrao) {
+    const linhas = String(texto).split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+    const cartas = [], ignoradas = [];
+    let atual = null, esperando = '', emFaixas = false, faixasTempo = [];
+    const fechar = () => {
+      if (!atual) return;
+      if (faixasTempo.length) atual.etapas = faixasTempo;
+      if (!atual.tipo) atual.tipo = tipoPadrao;
+      if (cartaValida(atual) && atual.adm) cartas.push(atual);
+      else ignoradas.push('Cota ' + (atual.codigo || '?') + ' (' + (atual.adm || 'sem administradora') + ') — dados incompletos');
+      atual = null; faixasTempo = []; emFaixas = false;
+    };
+    const ROTULOS = { 'administradora': 'adm', 'categoria': 'cat', 'nº': 'cod', 'no': 'cod', 'n°': 'cod', 'crédito': 'cred', 'credito': 'cred',
+      'entrada': 'ent', 'saldo devedor': 'skip', 'comissão': 'skip', 'comissao': 'skip', 'parcela': 'parc', 'parcelas': 'parc', 'tx': 'skip', 'taxa': 'skip' };
+    linhas.forEach((l) => {
+      const chave = l.toLowerCase().replace(/:$/, '');
+      if (chave === 'administradora') { fechar(); atual = novaCarta('fraga', '', {}); esperando = 'adm'; return; }
+      if (/^n[ãa]o h[áa] mais itens/i.test(l)) return;
+      if (!atual) { if (/R\$/.test(l)) ignoradas.push(l); return; }
+      if (/^tempo de parcelas/i.test(l)) { emFaixas = true; esperando = ''; return; }
+      if (ROTULOS[chave]) { esperando = ROTULOS[chave]; emFaixas = false; return; }
+      if (emFaixas) {
+        const f = l.match(/^(\d{1,3})\s*(?:à|a|-|até|ao)\s*(\d{1,3})\s*:?\s*(R\$\s*[\d.,]+)/i);
+        if (f) { const n = parseInt(f[2], 10) - parseInt(f[1], 10) + 1; if (n > 0) faixasTempo.push({ n, v: parseBR(f[3]) }); }
+        return;
+      }
+      if (!esperando) return;
+      const v = l; const tipo = esperando; esperando = '';
+      if (tipo === 'adm') atual.adm = canonAdm(v);
+      else if (tipo === 'cat') atual.tipo = tipoDoCabecalho(v) || '';
+      else if (tipo === 'cod') atual.codigo = v.replace(/\D/g, '');
+      else if (tipo === 'cred') atual.credito = parseBR(v);
+      else if (tipo === 'ent') {
+        const mm = v.match(/R\$\s*[\d.,]+/); atual.entrada = mm ? parseBR(mm[0]) : 0;
+        let p; RE_PARC.lastIndex = 0;
+        const resto = mm ? v.slice(v.indexOf(mm[0]) + mm[0].length) : '';
+        while ((p = RE_PARC.exec(resto))) atual.entradaParcelas.push({ n: parseInt(p[1], 10), v: parseBR(p[2]) });
+        if (atual.entradaParcelas.length) atual.obs.push('Oportunidade');
+      } else if (tipo === 'parc') {
+        let p; RE_PARC.lastIndex = 0;
+        while ((p = RE_PARC.exec(v))) atual.etapas.push({ n: parseInt(p[1], 10), v: parseBR(p[2]) });
+      }
+    });
+    fechar();
+    return { cartas, ignoradas };
+  }
+
+  // Fraga e Bitello (formato antigo): blocos começando pelo código da cota; "Taxa Grátis" antes do código é da carta seguinte
   function lerFraga(texto, tipo, admPadrao) {
+    if (/^\s*Administradora\s*$/mi.test(texto) && /^\s*Cr[ée]dito\s*$/mi.test(texto)) return lerFragaRotulos(texto, tipo);
     const toks = String(texto).split(/[\t\n\r]+/).map((s) => s.trim()).filter(Boolean);
     const cartas = [], ignoradas = [];
     let atual = null, taxaGratis = false, moneys = [];
@@ -853,7 +919,7 @@
     precoPadrao, precificacaoJairo, precificacaoAlfa, precificar, fundoReserva, taxaMensalLinear, tirMensal,
     avaliar, validarJuncao, OBJETIVOS, cartasDoSegmento, buscar, textoProposta, periodosCliente, textoPeriodo, textoEntradaParcelada,
     DIV_FAIXAS, SEG_COM_PROMO, PARCELA_PCT_PADRAO, PROMO_POR_SEGMENTO, segmentosDivulgacao, precoDivulgacao, itemDivulgacao, selecionarDivulgacao,
-    lerLume, lerUni, lerFraga, lerRafael, lerLR, lerLista, mesclarRafael, expirarRafael, cartaValida
+    lerLume, lerUni, lerFraga, lerFragaRotulos, lerRafael, lerLR, lerLista, mesclarRafael, expirarRafael, cartaValida
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = Motor;
   else root.Motor = Motor;

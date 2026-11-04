@@ -206,7 +206,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '26/10 · 16h';
+  const VERSAO = '03/11 · 22h20';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -331,7 +331,9 @@
     $('baseAdmWrap').hidden = f !== 'fraga';
     $('baseModoInfo').textContent = somar
       ? 'As cartas ' + (M.FORNECEDORES[f].art || 'do') + ' ' + M.FORNECEDORES[f].nome + ' somam ao que já existe e saem sozinhas 7 dias depois. A administradora e o tipo vêm da própria mensagem.'
-      : 'A lista nova substitui só ' + M.FORNECEDORES[f].nome + ' · ' + M.TIPOS[$('baseTipo').value] + '.';
+      : f === 'fraga'
+        ? 'A página nova da Fraga já traz administradora e categoria de cada carta: a lista substitui só os tipos que vierem nela. Tipo e administradora acima só valem para o formato antigo.'
+        : 'A lista nova substitui só ' + M.FORNECEDORES[f].nome + ' · ' + M.TIPOS[$('baseTipo').value] + '.';
     $('basePrevia').innerHTML = '';
   }
   $('baseForn').addEventListener('change', ajustarPassos);
@@ -351,13 +353,15 @@
     const p = PREVIA; const box = $('basePrevia');
     const nOp = p.cartas.filter(M.ehOportunidade).length;
     const ehRafael = M.FORNECEDORES[p.forn].modo === 'somar'; // fornecedor por WhatsApp (Rafael, LR)
+    const mostraTipo = ehRafael || p.forn === 'fraga'; // Fraga (página nova) informa a categoria de cada carta
+    const tiposLista = [...new Set(p.cartas.map((c) => c.tipo || p.tipo))];
     let h = `<div class="message ${p.cartas.length ? 'ok' : 'warn'}" style="margin-bottom:12px;"><strong>${p.cartas.length} cartas lidas</strong>${nOp ? ' · ' + nOp + ' Oportunidade' : ''}. Confira e ajuste o que precisar antes de salvar.</div>`;
     if (p.ignoradas.length) h += `<div class="message warn" style="margin-bottom:12px;"><strong>${p.ignoradas.length} trecho(s) não reconhecido(s)</strong> — confira se falta alguma carta (dá para adicionar à mão depois):<div class="texto-copia">${p.ignoradas.map(esc).join('\n')}</div></div>`;
     if (p.cartas.length) {
-      h += `<div class="table-wrap"><table class="data-table"><thead><tr>${ehRafael ? '<th>Tipo</th>' : ''}<th>Administradora</th><th>Crédito</th><th>Entrada</th><th>Entrada parcelada</th><th>Parcelas</th><th>Prazo</th><th>Observações</th><th></th></tr></thead><tbody>`;
+      h += `<div class="table-wrap"><table class="data-table"><thead><tr>${mostraTipo ? '<th>Tipo</th>' : ''}<th>Administradora</th><th>Crédito</th><th>Entrada</th><th>Entrada parcelada</th><th>Parcelas</th><th>Prazo</th><th>Observações</th><th></th></tr></thead><tbody>`;
       p.cartas.forEach((c, i) => {
         h += `<tr data-i="${i}">
-          ${ehRafael ? `<td><select class="pv-tipo"><option value="veiculo"${c.tipo === 'veiculo' ? ' selected' : ''}>Veículo</option><option value="imovel"${c.tipo === 'imovel' ? ' selected' : ''}>Imóvel</option></select></td>` : ''}
+          ${mostraTipo ? `<td><select class="pv-tipo"><option value="veiculo"${(c.tipo || p.tipo) === 'veiculo' ? ' selected' : ''}>Veículo</option><option value="imovel"${(c.tipo || p.tipo) === 'imovel' ? ' selected' : ''}>Imóvel</option></select></td>` : ''}
           <td><select class="pv-adm">${admOptions(c.adm)}</select></td>
           <td><input type="text" class="pv-cred" value="${M.formatBRL(c.credito)}" size="12"></td>
           <td><input type="text" class="pv-ent" value="${M.formatBRL(c.entrada)}" size="11"></td>
@@ -368,8 +372,9 @@
           <td><button class="rm-btn pv-rm" title="Tirar da lista">×</button></td></tr>`;
       });
       h += '</tbody></table></div>';
-      const destino = ehRafael ? 'Adicionar ao estoque ' + (M.FORNECEDORES[p.forn].art || 'do') + ' ' + M.FORNECEDORES[p.forn].nome : `Salvar e substituir ${M.FORNECEDORES[p.forn].nome} · ${M.TIPOS[p.tipo]}`;
-      h += `<div class="btn-row" style="margin-top:14px;"><span class="section-sub" style="margin:0;">${ehRafael ? 'Cartas repetidas só renovam a data.' : 'Hoje existem ' + ((LOTES[chaveLote(p.forn, p.tipo)] || {}).cartas || []).length + ' cartas nessa lista; elas serão trocadas por estas.'}</span>
+      const destino = ehRafael ? 'Adicionar ao estoque ' + (M.FORNECEDORES[p.forn].art || 'do') + ' ' + M.FORNECEDORES[p.forn].nome : `Salvar e substituir ${M.FORNECEDORES[p.forn].nome} · ${tiposLista.map((t) => M.TIPOS[t]).join(' e ')}`;
+      const hoje = tiposLista.map((t) => ((LOTES[chaveLote(p.forn, t)] || {}).cartas || []).length + ' em ' + M.TIPOS[t]).join(' e ');
+      h += `<div class="btn-row" style="margin-top:14px;"><span class="section-sub" style="margin:0;">${ehRafael ? 'Cartas repetidas só renovam a data.' : 'Hoje existem ' + hoje + '; elas serão trocadas por estas. Os outros tipos não mudam.'}</span>
         <button class="btn primary" id="btnSalvarPrevia">${destino}</button></div><div class="form-msg" id="previaMsg"></div>`;
     }
     box.innerHTML = h;
@@ -407,9 +412,17 @@
         montarBase();
         $('basePrevia').innerHTML = `<div class="message ok">Salvo. ${txt.join(' · ')}.</div>`;
       } else {
-        const cartas = p.cartas.map((c, i) => Object.assign({}, c, { fornecedor: p.forn, tipo: p.tipo, id: novoId(p.forn, p.tipo, i), criadoEm: agora }));
-        await salvarLote(p.forn, p.tipo, cartas);
-        $('basePrevia').innerHTML = `<div class="message ok">Salvo. ${M.FORNECEDORES[p.forn].nome} · ${M.TIPOS[p.tipo]} agora tem ${cartas.length} cartas.</div>`;
+        // Substitui só os tipos que vieram na lista (a Fraga informa a categoria de cada carta)
+        const porTipo = {};
+        p.cartas.forEach((c) => { const t = c.tipo || p.tipo; (porTipo[t] = porTipo[t] || []).push(c); });
+        const txt = [];
+        for (const t of Object.keys(porTipo)) {
+          const cartas = porTipo[t].map((c, i) => Object.assign({}, c, { fornecedor: p.forn, tipo: t, id: novoId(p.forn, t, i), criadoEm: agora }));
+          await salvarLote(p.forn, t, cartas, true);
+          txt.push(`${M.TIPOS[t]} agora tem ${cartas.length} cartas`);
+        }
+        montarBase();
+        $('basePrevia').innerHTML = `<div class="message ok">Salvo. ${M.FORNECEDORES[p.forn].nome}: ${txt.join(' · ')}.</div>`;
       }
       $('baseTexto').value = ''; PREVIA = null;
     } catch (e) { msg('previaMsg', traduzErro(e)); b.disabled = false; b.textContent = 'Tentar de novo'; }
@@ -1125,7 +1138,12 @@
     return `<details class="stock-card" style="margin-bottom:22px;" open><summary style="cursor:pointer; font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:600;">Por que as cartas saíram</summary>
       <div class="section-sub" style="margin:10px 0 12px;">Só cartas comuns (as Oportunidades entram todas). Uma carta da Caixa pode contar em dois segmentos. ${D.semFaixa} carta(s) da base estão fora de todas as faixas de crédito.</div>
       <div class="table-wrap"><table class="data-table comp-table"><thead><tr><th>Segmento</th><th>Na faixa de crédito</th><th>Saíram pela entrada (35%)</th><th>Saíram pela parcela</th><th>Entram</th><th>Menor entrada da faixa</th></tr></thead>
-      <tbody>${linhas || '<tr><td colspan="6" class="lote-vazio">Nenhuma carta comum dentro das faixas de crédito.</td></tr>'}</tbody></table></div></details>`;
+      <tbody>${linhas || '<tr><td colspan="6" class="lote-vazio">Nenhuma carta comum dentro das faixas de crédito.</td></tr>'}</tbody></table></div>
+      ${(D.fora || []).length ? `<div class="section-title" style="font-size:15px; margin:22px 0 4px;">Onde estão as ${D.semFaixa} cartas fora das faixas</div>
+      <div class="section-sub" style="margin-bottom:10px;">"Passariam" usa a mesma regra de preço da divulgação, a entrada abaixo de 35% e a parcela até 2,5% (imóveis 1%).</div>
+      <div class="table-wrap"><table class="data-table comp-table"><thead><tr><th>Tipo</th><th>Faixa de crédito</th><th>Cartas</th><th>Com entrada abaixo de 35%</th><th>Passariam (entrada e parcela)</th></tr></thead><tbody>
+      ${D.fora.map((g) => `<tr><td>${g.tipo === 'imovel' ? 'Imóvel' : 'Veículo'}</td><td class="mono">${g.max === Infinity ? 'acima de ' + BRL(g.min) : (g.min ? BRL(g.min) + ' a ' : 'até ') + BRL(g.max)}</td><td class="mono">${g.total}</td><td class="mono">${g.entrada35}</td><td class="mono" style="color:var(--ok);">${g.ambos}</td></tr>`).join('')}
+      </tbody></table></div>` : ''}</details>`;
   }
 
   async function gerarDivulgacao() {
