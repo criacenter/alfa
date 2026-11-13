@@ -59,7 +59,8 @@
   ];
   const ADM_CAIXA = 'Caixa Consórcios';
   function canonAdm(txt) {
-    const t = ' ' + semAcento(txt).replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+    // Junta letras soltas ("H S" → "hs", "B.B." → "bb") antes de procurar a administradora
+    const t = ' ' + semAcento(txt).replace(/[^a-z0-9]+/g, ' ').trim().replace(/\b([a-z])(?: ([a-z])\b)+/g, (m) => m.replace(/ /g, '')) + ' ';
     if (!t.trim()) return '';
     for (const a of ADMS) {
       for (const k of a.chaves) if (t.includes(' ' + k + ' ')) return a.nome;
@@ -279,10 +280,70 @@
     maior: 'Maior crédito dentro dos limites'
   };
 
-  function cartasDoSegmento(base, segmento) {
+  /* ---------------- O que cada administradora atende, por segmento ----------------
+     st: S = aceita · R = aceita com restrição · N = não aceita · ? = a confirmar
+     "A confirmar" entra na busca em leves, pesados, motos e imóveis (como sempre foi) e fica de fora
+     em máquinas, implementos e solar (antes só Caixa). Fonte: comparativo de 13/11/2026 — o administrador ajusta na aba Administradoras. */
+  const ST_ADM = { S: 'Aceita', R: 'Aceita com restrição', N: 'Não aceita', '?': 'A confirmar' };
+  const SEG_ABERTO = { leves: true, pesados: true, motos: true, imoveis: true };
+  const REP_BC = { 'Sicredi Consórcios': 33.04, 'HS Consórcios': 54.36, 'BB Consórcios': 71.63, 'Consórcio Servopa': 104.97,
+    'Rodobens': 107.77, 'Consórcio Magalu': 117.69, 'Bradesco Consórcios': 144.91, 'Itaú Consórcio': 174.69, 'Mycon': 227.94,
+    'Santander Consórcio': 233.03, 'Disal Consórcio': 236.63, 'Consórcio Embracon': 276.30, 'Caixa Consórcios': 344.19,
+    'Consórcio Nacional Volkswagen': 368.23, 'CNP Consórcio': 409.80, 'Porto Bank': 468.21, 'Porto Bank VP': 468.21, 'Zema Consórcio': 1548.75 };
+  const C = (st, nota) => ({ st, nota: nota || '' });
+  const REGRAS_ADM_PADRAO = {
+    'Bradesco Consórcios': { leves: C('S', 'Usado até 8 anos; valor FIPE ≥ saldo devedor'), pesados: C('S', 'Caminhão até 8 anos; ônibus só para CNPJ de turismo'), motos: C('S', 'Moto 600cc+ até 5 anos; 0 km a partir de 250cc'), imoveis: C('S') },
+    'BB Consórcios': { leves: C('S', 'Usado até 12 anos; paga veículo de leilão sem chassi remarcado'), pesados: C('S', 'Caminhão e trator até 12 anos'), motos: C('S', 'Moto até 5 anos'), solar: C('?', 'Indício: linha "sustentáveis" — confirmar'), imoveis: C('S'), _geral: 'Transferência PF não exige conta no BB; PJ precisa ter conta há mais de 12 meses.' },
+    'Caixa Consórcios': { leves: C('S', 'Usado até 5 anos (8 anos para adesões desde 08/2021)'), pesados: C('S'), motos: C('S'), maquinas: C('S', 'Carta de Veículo Caixa'), implementos: C('S', 'Carta de Veículo Caixa'), solar: C('S', 'Carta de Veículo Caixa'), imoveis: C('S') },
+    'CNP Consórcio': { leves: C('S', 'Grupos antigos da Caixa'), imoveis: C('S', 'Grupos antigos da Caixa') },
+    'Consórcio Embracon': { leves: C('S'), pesados: C('S'), motos: C('S'), solar: C('?', 'Indício: "bens sustentáveis" — confirmar'), imoveis: C('S') },
+    'Consórcio Magalu': { leves: C('S', 'Usado até 10 anos; paga pelo valor do crédito'), pesados: C('S', 'Caminhão até 20 anos'), motos: C('S', 'Moto até 10 anos, sem limite de cilindrada'), solar: C('S', 'Parceria SolarPrime; créditos de R$ 5 mil a 260 mil'), imoveis: C('S') },
+    'Consórcio Nacional Volkswagen': { leves: C('S', 'Usado até 10 anos (2013+); valor > saldo devedor'), pesados: C('S', 'Caminhão até 10 anos (2013+)'), motos: C('R', 'Moto só 0 km') },
+    'Consórcio Randon': { pesados: C('S'), implementos: C('S', 'Foco da casa; R$ 100–500 mil; implementos Randon novos ou usados'), imoveis: C('S', 'Via Racon (mesmo grupo)') },
+    'Consórcio Servopa': { leves: C('S'), pesados: C('S') },
+    'Disal Consórcio': { leves: C('S', 'Só automóveis'), pesados: C('N'), motos: C('N'), maquinas: C('N'), implementos: C('N'), solar: C('N'), imoveis: C('N') },
+    'HS Consórcios': { leves: C('S', 'Usado até 10 anos (15 com avalista)'), pesados: C('S', 'Caminhão até 15 anos'), motos: C('S', 'Moto até 10 anos'), maquinas: C('?', 'Só trator até 5 anos (cartas INPC/IPCA); escavadeira não informada'), solar: C('S', 'O próprio equipamento fica de garantia'), imoveis: C('S') },
+    'Itaú Consórcio': { leves: C('S', 'Usado até 15 anos (PF) / 8 (PJ); gestão 100% digital'), pesados: C('S', 'Caminhão até 8 anos; ônibus e vans até 5'), motos: C('R', '150cc+ até 1 ano; 250cc+ até 3 anos'), maquinas: C('N', 'Escavadeira não aceita; só trator até 2 anos'), implementos: C('S', 'Baú, basculante, frigorífico; usado até 6 anos'), solar: C('N', 'Não consta nos bens aceitos'), imoveis: C('S', 'Compra, terreno, construção, reforma e quitação de financiamento') },
+    'Mycon': { leves: C('S', 'Usado até 10 anos; paga pelo valor do crédito; fora da regra se o bem vale 2× o saldo'), pesados: C('S', 'Caminhão e ônibus até 10 anos'), motos: C('S', 'Moto até 3 anos'), implementos: C('S', 'Implemento rodoviário até 10 anos'), imoveis: C('S') },
+    'Porto Bank': { leves: C('S', 'Usado até 8 anos'), pesados: C('N', 'Grupos comuns não aceitam pesados (só grupos VP)'), maquinas: C('N'), implementos: C('N'), solar: C('S', 'Placa solar entre os bens aceitos'), imoveis: C('S') },
+    'Porto Bank VP': { leves: C('S', 'Usado até 8 anos'), pesados: C('S', 'VP11 até 10 anos / VP10 até 6 anos'), maquinas: C('R', 'Até 2 anos, só de revenda; pode exigir garantia substitutiva'), implementos: C('S', 'Semirreboques: VP11 até 10 anos / VP10 até 6') },
+    'Racon Consórcios': { imoveis: C('S', 'Grupos imobiliários de alto valor (até R$ 1 mi)') },
+    'Rodobens': { leves: C('S', 'Usado até 7 anos'), pesados: C('S', 'Caminhão até 7 anos; ônibus até 5'), motos: C('R', 'Moto só 0 km'), maquinas: C('N', 'Trator só 0 km'), solar: C('?', 'Indício: energia renovável — confirmar'), imoveis: C('S') },
+    'Santander Consórcio': { leves: C('S', 'Usado até 9 anos; análise automática em 48 h'), pesados: C('S', 'Caminhão até 10 anos; análise automática em 48 h'), motos: C('S', 'Moto 300cc+ até 5 anos'), maquinas: C('R', 'Linha amarela até 7 anos; cotas desde 11/2025 exigem garantia extra (veículo até 10 anos)'), implementos: C('S', 'Carreta, reboque, bitrem, rodotrem; vistoria obrigatória'), solar: C('?', 'Indício em fonte secundária — confirmar'), imoveis: C('S'), _geral: 'Não correntista precisa reconhecer firma em cartório. Não aceita bem de leilão nem de empresa da qual o consorciado foi sócio nos últimos 12 meses.' },
+    'Serello Consórcios': {},
+    'Sicredi Consórcios': { leves: C('S', 'Usado até 10 anos'), pesados: C('S', 'Caminhão até 10 anos; paga até 10% acima da FIPE'), motos: C('S', 'Moto até 10 anos'), maquinas: C('S', 'Retroescavadeira até 10 anos'), implementos: C('S', 'Até 10% acima da FIPE'), solar: C('S', 'Linha própria Sustentável: painel, gerador, aquecedor; cliente escolhe o fornecedor'), imoveis: C('S'), _geral: 'Exige que o cliente seja associado (abrir conta na cooperativa).' },
+    'Sponchiado Consórcios': {},
+    'Zema Consórcio': { leves: C('S', 'Usado até 10 anos'), pesados: C('S', 'Caminhão até 15 anos'), motos: C('S', 'Moto até 10 anos') }
+  };
+  // Junta o padrão com o que o administrador salvou (salvo ganha). Devolve { adm: { seg: {st, nota}, _geral } }
+  function regrasAdm(salvas) {
+    const out = {};
+    const nomes = new Set([...ADMS.map((a) => a.nome), ...Object.keys(salvas || {})]);
+    nomes.forEach((adm) => {
+      const p = REGRAS_ADM_PADRAO[adm] || {}, sv = (salvas || {})[adm] || {};
+      const r = { _geral: sv._geral != null ? sv._geral : (p._geral || '') };
+      Object.keys(SEGMENTOS).forEach((seg) => {
+        const x = sv[seg] || p[seg] || C('?');
+        r[seg] = { st: ST_ADM[x.st] ? x.st : '?', nota: x.nota || '' };
+      });
+      out[adm] = r;
+    });
+    return out;
+  }
+  function regraAdmSeg(regras, adm, seg) {
+    const r = regras && regras[adm];
+    return (r && r[seg]) || { st: '?', nota: '' };
+  }
+  function admAtende(regras, adm, seg) {
+    if (!regras) { const s = SEGMENTOS[seg]; return !s || !s.adm || adm === s.adm; } // sem regras: comportamento antigo
+    const st = regraAdmSeg(regras, adm, seg).st;
+    return st === 'S' || st === 'R' || (st === '?' && !!SEG_ABERTO[seg]);
+  }
+
+  function cartasDoSegmento(base, segmento, regras) {
     const s = SEGMENTOS[segmento];
     if (!s) return [];
-    return base.filter((c) => c.tipo === s.tipo && (!s.adm || c.adm === s.adm) && c.credito > 0 && (c.etapas || []).length);
+    return base.filter((c) => c.tipo === s.tipo && admAtende(regras, c.adm, segmento) && c.credito > 0 && (c.etapas || []).length);
   }
 
   // Guarda só as K combinações de menor nota (sem precisar guardar todas)
@@ -352,7 +413,7 @@
   }
 
   function rodarBusca(base, q) {
-    const elegiveis = cartasDoSegmento(base, q.segmento);
+    const elegiveis = cartasDoSegmento(base, q.segmento, q.regrasAdm);
     const grupos = {};
     elegiveis.forEach((c) => {
       const semJ = FORNECEDORES[c.fornecedor] && FORNECEDORES[c.fornecedor].semJuncao;
@@ -914,6 +975,7 @@
   const Motor = {
     parseBR, formatBRL, formatPct, r2, pad2, semAcento,
     ADMS, ADM_CAIXA, canonAdm, logoAdm, FORNECEDORES, TIPOS,
+    ST_ADM, SEG_ABERTO, REP_BC, REGRAS_ADM_PADRAO, regrasAdm, regraAdmSeg, admAtende,
     prazo, saldoDevedor, ehOportunidade, etapaMaiorPrazo, assinatura, calendario, faixas, cronograma, textoFaixas,
     SEGMENTOS, FAIXAS_LIMITES, TAXAS_PADRAO, TRANSFERENCIA_PCT, TETO_PCT, AGIO_ALFA_PCT,
     precoPadrao, precificacaoJairo, precificacaoAlfa, precificar, fundoReserva, taxaMensalLinear, tirMensal,

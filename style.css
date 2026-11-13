@@ -1270,3 +1270,17 @@ textarea.inp{ min-height:150px; resize:vertical; font-family:'JetBrains Mono',mo
 .df-chip{ background:#fff; border-radius:6px; }
 .df-box .df-destaque{ font-size:1.45em; line-height:1.1; }
 .df-box .df-sub{ font-size:0.8em; font-weight:700; line-height:1.2; }
+
+/* ---------- Administradoras ---------- */
+.selo.amarelo{ background:rgba(216,174,94,0.12); color:var(--gold-bright); border-color:rgba(216,174,94,0.35); }
+.exig-box{ margin-top:12px; padding:10px 12px; border-left:3px solid var(--gold); background:rgba(216,174,94,0.06); font-size:12.5px; line-height:1.45; }
+.exig-tit{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); margin-bottom:4px; }
+.adm-table td{ vertical-align:top; }
+.adm-table td.adm-nome{ min-width:150px; font-weight:600; }
+.adm-table td.adm-nome img{ display:block; height:20px; max-width:80px; object-fit:contain; object-position:left; margin-bottom:4px; background:#fff; border-radius:3px; padding:2px 4px; }
+.adm-table td.adm-cel{ min-width:110px; white-space:normal; }
+.adm-table td.adm-cel small{ display:block; color:var(--ink-dim); font-size:11px; line-height:1.3; margin-top:2px; }
+.adm-simb{ font-weight:700; font-size:15px; }
+.st-S .adm-simb{ color:var(--ok); } .st-R .adm-simb{ color:var(--gold-bright); } .st-N .adm-simb{ color:var(--ink-dim); } .st-nc .adm-simb{ color:var(--ink-dim); opacity:.6; }
+.adm-table tr.adm-geral td{ font-size:12px; color:var(--ink-dim); border-top:none; padding-top:0; }
+.adm-table select, .adm-table input{ width:100%; font-size:12px; padding:4px 6px; margin-bottom:3px; }

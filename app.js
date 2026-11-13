@@ -202,11 +202,12 @@
     }
     $('authGate').hidden = true; $('appWrap').hidden = false;
     aplicarPerfil();
+    await carregarRegrasAdm();
     await carregarBase();
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '03/11 · 22h30';
+  const VERSAO = '13/11 · 16h30';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -227,6 +228,7 @@
     if (btn.dataset.tab === 'usuarios') carregarUsuarios();
     if (btn.dataset.tab === 'divulgacao') gerarDivulgacao();
     if (btn.dataset.tab === 'base') renderBase();
+    if (btn.dataset.tab === 'adms') renderAdms();
   }));
 
   /* ---------------- Modal ---------------- */
@@ -291,7 +293,8 @@
   }
   function montarBase() {
     BASE = [];
-    Object.keys(LOTES).forEach((k) => (LOTES[k].cartas || []).forEach((c) => BASE.push(c)));
+    // Nome oficial da administradora (ex.: "H S" e "HS Consórcios" viram a mesma)
+    Object.keys(LOTES).forEach((k) => (LOTES[k].cartas || []).forEach((c) => { const a = M.canonAdm(c.adm); if (a) c.adm = a; BASE.push(c); }));
     const info = $('buscaBaseInfo');
     const atual = Object.values(LOTES).map((l) => l.atualizadoEm).filter(Boolean).sort().pop();
     info.className = 'message info';
@@ -765,7 +768,7 @@
       entradaAlvo: num($('bEntAlvo').value), parcelaAlvo: num($('bParcAlvo').value),
       entradaMax: num($('bEntMax').value), parcelaMax: num($('bParcMax').value),
       tolerancia: Math.min(Math.max(num($('bTol').value) || 15, 1), 60) / 100, qtd: +$('bQtd').value,
-      regra: regraEU(), params: paramsPreco()
+      regra: regraEU(), params: paramsPreco(), regrasAdm: REGRAS
     };
     const out = $('buscaResultados');
     if (!BASE.length) { out.innerHTML = '<div class="message warn">A base de cartas está vazia.</div>'; return; }
@@ -805,6 +808,8 @@
     if (a.oportunidade) badges += '<span class="selo verde">Oportunidade</span>';
     if (a.compartilhaCom && a.compartilhaCom.length) badges += `<span class="selo vermelho">usa carta também da opção ${a.compartilhaCom.join(', ')} — só uma pode ser fechada</span>`;
     if (acimaTeto) badges += `<span class="selo vermelho">entrada acima de 35%</span>`;
+    const seg = (q && q.segmento) || $('bSeg').value;
+    badges += seloAdm(a.adm, seg);
     const p = a.preco;
     const linhas = [];
     linhas.push(['Entrada dos fornecedores', BRL(a.entradaForn)]);
@@ -840,6 +845,7 @@
         <details class="op-detalhes"><summary>Detalhes para a equipe</summary>
           ${linhas.map((l) => `<div class="pb-row"><span>${l[0]}</span><span>${l[1]}</span></div>`).join('')}
           <div class="cotas-list"><div style="font-family:Inter,sans-serif; color:var(--ink-dim); font-size:11px; text-transform:uppercase; letter-spacing:.05em;">Cotas usadas</div>${cotas}</div>
+          ${exigenciasHTML(a.adm, seg)}
         </details>
         <div class="op-actions"><button class="btn sm" data-acao="texto">Copiar texto</button><button class="btn sm" data-acao="vertexto">Ver texto</button><button class="btn primary sm" data-acao="card">Gerar card</button></div>
         <div class="card-slot"></div>
@@ -860,12 +866,92 @@
     }));
   }
 
+  /* ---------------- O que cada administradora atende ---------------- */
+  let REGRAS = M.regrasAdm({});
+  let REGRAS_SALVAS = {};
+  async function carregarRegrasAdm() {
+    try {
+      const fb = await fbx();
+      const d = await fb.getDoc(fb.doc(fb.db, 'regrasAdm', 'atual'));
+      REGRAS_SALVAS = d.exists() ? (d.data().adms || {}) : {};
+      REGRAS_META = d.exists() ? d.data() : null;
+    } catch (e) { REGRAS_SALVAS = {}; }
+    REGRAS = M.regrasAdm(REGRAS_SALVAS);
+  }
+  let REGRAS_META = null;
+  function seloAdm(adm, seg) {
+    const r = M.regraAdmSeg(REGRAS, adm, seg);
+    if (r.st === 'R') return `<span class="selo amarelo" title="${esc(r.nota)}">adm com restrição neste segmento</span>`;
+    if (r.st === '?') return '<span class="selo cinza">aceitação da adm a confirmar</span>';
+    return '';
+  }
+  function exigenciasHTML(adm, seg) {
+    const r = M.regraAdmSeg(REGRAS, adm, seg), g = (REGRAS[adm] || {})._geral;
+    if (!r.nota && !g && r.st === 'S') return '';
+    return `<div class="exig-box"><div class="exig-tit">Exigências da ${esc(adm)} · ${esc(M.SEGMENTOS[seg] ? M.SEGMENTOS[seg].nome : '')}</div>
+      <div><strong>${esc(M.ST_ADM[r.st])}</strong>${r.nota ? ' — ' + esc(r.nota) : ''}</div>${g ? `<div style="margin-top:4px;">${esc(g)}</div>` : ''}</div>`;
+  }
+  const SEG_ORDEM_ADM = ['leves', 'motos', 'pesados', 'implementos', 'maquinas', 'solar', 'imoveis'];
+  const SEG_CURTO = { leves: 'Leves', motos: 'Motos', pesados: 'Pesados', implementos: 'Implementos', maquinas: 'Linha amarela', solar: 'Solar', imoveis: 'Imóveis' };
+  const SIMB_ADM = { S: '●', R: '◐', N: '—', '?': '?' };
+  let ADMS_EDITANDO = false;
+  function renderAdms() {
+    const box = $('admsConteudo'); if (!box) return;
+    const fSeg = $('admsSeg').value;
+    const nomes = Object.keys(REGRAS).sort((x, y) => x.localeCompare(y, 'pt-BR'));
+    $('admsEditar').hidden = !ehAdmin() || ADMS_EDITANDO;
+    $('admsSalvar').hidden = $('admsCancelar').hidden = !ADMS_EDITANDO;
+    const segs = fSeg ? [fSeg] : SEG_ORDEM_ADM;
+    let lista = nomes;
+    if (fSeg && !ADMS_EDITANDO) lista = nomes.filter((a) => M.admAtende(REGRAS, a, fSeg)).sort((x, y) => (M.REP_BC[x] || 999) - (M.REP_BC[y] || 999));
+    let h = `<table class="data-table adm-table"><thead><tr><th>Administradora</th><th title="Reclamações por milhão de consorciados — Banco Central, 1º sem/2026 (menor é melhor)">Índice BC</th>${segs.map((g) => `<th>${SEG_CURTO[g]}</th>`).join('')}</tr></thead><tbody>`;
+    lista.forEach((a) => {
+      const r = REGRAS[a], logo = M.logoAdm(a), rep = M.REP_BC[a];
+      h += `<tr data-adm="${esc(a)}"><td class="adm-nome">${logo ? `<img src="${logo}" alt="">` : ''}<span>${esc(a)}</span></td><td class="mono">${rep != null ? String(rep.toFixed(2)).replace('.', ',') : '—'}</td>`;
+      segs.forEach((g) => {
+        const c = r[g];
+        if (ADMS_EDITANDO) h += `<td class="adm-cel"><select data-seg="${g}">${Object.keys(M.ST_ADM).map((k) => `<option value="${k}"${k === c.st ? ' selected' : ''}>${M.ST_ADM[k]}</option>`).join('')}</select><input data-nota="${g}" value="${esc(c.nota)}" placeholder="exigência"></td>`;
+        else h += `<td class="adm-cel st-${c.st === '?' ? 'nc' : c.st}"><span class="adm-simb">${SIMB_ADM[c.st]}</span>${c.nota ? `<small>${esc(c.nota)}</small>` : ''}</td>`;
+      });
+      h += '</tr>';
+      if (ADMS_EDITANDO) h += `<tr data-geral="${esc(a)}"><td colspan="${segs.length + 2}"><input data-g="1" value="${esc(r._geral)}" placeholder="Exigências gerais da ${esc(a)} (taxa de transferência, avalista, conta, prazo de liberação...)"></td></tr>`;
+      else if (r._geral) h += `<tr class="adm-geral"><td colspan="${segs.length + 2}">${esc(r._geral)}</td></tr>`;
+    });
+    if (!lista.length) h += `<tr><td colspan="${segs.length + 2}" class="lote-vazio">Nenhuma administradora atende esse segmento.</td></tr>`;
+    box.innerHTML = h + '</tbody></table>';
+    $('admsInfo').textContent = REGRAS_META && REGRAS_META.atualizadoEm ? 'Última edição em ' + fmtData(REGRAS_META.atualizadoEm) + '.' : 'Usando o comparativo de 13/11/2026 (ainda sem edições suas).';
+  }
+  if ($('admsSeg')) {
+    $('admsSeg').addEventListener('change', renderAdms);
+    $('admsEditar').addEventListener('click', () => { ADMS_EDITANDO = true; $('admsSeg').value = ''; renderAdms(); });
+    $('admsCancelar').addEventListener('click', () => { ADMS_EDITANDO = false; renderAdms(); });
+    $('admsSalvar').addEventListener('click', async () => {
+      const adms = {};
+      document.querySelectorAll('#admsConteudo tr[data-adm]').forEach((tr) => {
+        const a = tr.dataset.adm, o = {};
+        tr.querySelectorAll('select[data-seg]').forEach((sel) => { o[sel.dataset.seg] = { st: sel.value, nota: tr.querySelector(`[data-nota="${sel.dataset.seg}"]`).value.trim() }; });
+        const g = document.querySelector(`#admsConteudo tr[data-geral="${CSS.escape(a)}"] input`);
+        o._geral = g ? g.value.trim() : '';
+        adms[a] = o;
+      });
+      const btn = $('admsSalvar'); btn.disabled = true;
+      try {
+        const fb = await fbx();
+        const dados = { adms, atualizadoEm: new Date().toISOString(), atualizadoPor: EU.username || '' };
+        await fb.setDoc(fb.doc(fb.db, 'regrasAdm', 'atual'), dados);
+        REGRAS_SALVAS = adms; REGRAS_META = dados; REGRAS = M.regrasAdm(adms);
+        ADMS_EDITANDO = false; renderAdms();
+      } catch (e) { $('admsInfo').innerHTML = '<span style="color:var(--danger-bright);">Não consegui salvar: ' + esc(traduzErro(e)) + '. Confira se as regras novas do Firebase foram publicadas.</span>'; }
+      btn.disabled = false;
+    });
+  }
+
   /* ---------------- Montar manualmente ---------------- */
   const MANUAL = new Set();
   $('btnManual').addEventListener('click', () => { $('manualWrap').hidden = !$('manualWrap').hidden; if (!$('manualWrap').hidden) { preencherFiltrosManual(); renderManual(); } });
   $('bSeg').addEventListener('change', () => { MANUAL.clear(); if (!$('manualWrap').hidden) { preencherFiltrosManual(); renderManual(); } });
   function preencherFiltrosManual() {
-    const lista = M.cartasDoSegmento(BASE, $('bSeg').value);
+    const lista = M.cartasDoSegmento(BASE, $('bSeg').value, REGRAS);
     const vF = $('mFornecedor').value, vA = $('mAdm').value;
     const forns = [...new Set(lista.map((c) => c.fornecedor))];
     const adms = [...new Set(lista.map((c) => c.adm))].sort();
@@ -876,7 +962,7 @@
   }
   function renderManual() {
     const f = $('mFornecedor').value, a = $('mAdm').value, b = num($('mBusca').value);
-    let lista = M.cartasDoSegmento(BASE, $('bSeg').value).filter((c) => (!f || c.fornecedor === f) && (!a || c.adm === a));
+    let lista = M.cartasDoSegmento(BASE, $('bSeg').value, REGRAS).filter((c) => (!f || c.fornecedor === f) && (!a || c.adm === a));
     if (b > 0) lista = lista.filter((c) => Math.abs(c.credito - b) <= b * 0.15);
     lista.sort((x, y) => x.credito - y.credito);
     const mostrar = lista.slice(0, 300);
@@ -884,7 +970,7 @@
     mostrar.forEach((c) => {
       const on = MANUAL.has(c.id);
       h += `<tr class="${on ? 'sel-row' : ''}"><td><input type="checkbox" data-mid="${esc(c.id)}"${on ? ' checked' : ''}></td><td>${M.FORNECEDORES[c.fornecedor] ? M.FORNECEDORES[c.fornecedor].nome : ''}</td><td>${esc(c.adm)}</td>
-        <td class="mono">${BRL(c.credito)}</td><td class="mono">${BRL(c.entrada)}</td><td class="mono" style="white-space:normal;">${parcelasCartaTxt(c)}</td><td class="mono">${M.prazo(c)}x</td><td>${selosCarta(c)}</td></tr>`;
+        <td class="mono">${BRL(c.credito)}</td><td class="mono">${BRL(c.entrada)}</td><td class="mono" style="white-space:normal;">${parcelasCartaTxt(c)}</td><td class="mono">${M.prazo(c)}x</td><td>${seloAdm(c.adm, $('bSeg').value)}${selosCarta(c)}</td></tr>`;
     });
     if (!mostrar.length) h += '<tr><td colspan="8" class="lote-vazio">Nenhuma carta com esses filtros.</td></tr>';
     $('mTabela').innerHTML = h + '</tbody>';

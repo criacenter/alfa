@@ -7,7 +7,7 @@
 <link rel="icon" type="image/png" href="assets/favicon_jairo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=17">
+<link rel="stylesheet" href="style.css?v=18">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -78,6 +78,7 @@
 
     <div class="tabs">
       <button class="tab-btn active" data-tab="busca">Buscar cartas</button>
+      <button class="tab-btn" data-tab="adms">Administradoras</button>
       <button class="tab-btn so-base" data-tab="base">Base de cartas</button>
       <button class="tab-btn so-admin" data-tab="divulgacao">Divulgação</button>
       <button class="tab-btn so-admin" data-tab="novo">Consórcio Novo</button>
@@ -89,7 +90,7 @@
       <div class="message info" id="buscaBaseInfo" style="margin-bottom:22px;">Carregando a base de cartas...</div>
 
       <div class="section-title">O que o cliente quer</div>
-      <div class="section-sub">O segmento define quais cartas entram: máquinas, implementos e energia solar usam só cartas de veículo da Caixa.</div>
+      <div class="section-sub">O segmento define quais cartas entram: só administradoras que atendem aquele segmento (veja a aba Administradoras).</div>
       <div class="grid three">
         <div class="field"><label for="bSeg">Segmento</label>
           <select id="bSeg">
@@ -257,6 +258,19 @@
       <div id="ofertaNovoWrap" style="margin-top:8px;"></div>
     </div>
 
+    <!-- ===================== ADMINISTRADORAS ===================== -->
+    <div class="panel-view" id="view-adms">
+      <div class="stock-card">
+        <div class="btn-row" style="margin-bottom:6px;"><div class="section-title" style="font-size:17px; margin:0;">O que cada administradora atende</div>
+          <button class="btn sm" id="admsEditar" hidden>Editar</button><button class="btn sm primary" id="admsSalvar" hidden>Salvar</button><button class="btn sm" id="admsCancelar" hidden>Cancelar</button></div>
+        <div class="section-sub">A busca usa esta tabela: só entram cartas de administradoras que aceitam o segmento. <strong>●</strong> aceita · <strong>◐</strong> aceita com restrição · <strong>—</strong> não aceita · <strong>?</strong> a confirmar (entra em leves, motos, pesados e imóveis; fica de fora em implementos, linha amarela e solar). Índice BC = reclamações por milhão de consorciados no 1º semestre de 2026 (menor é melhor).</div>
+        <div class="field" style="max-width:300px; margin-bottom:12px;"><label for="admsSeg">Ver segmento</label>
+          <select id="admsSeg"><option value="">Todos os segmentos</option><option value="leves">Veículos leves</option><option value="motos">Motos</option><option value="pesados">Caminhões / pesados</option><option value="implementos">Implementos rodoviários</option><option value="maquinas">Máquinas da linha amarela</option><option value="solar">Energia solar</option><option value="imoveis">Imóveis</option></select></div>
+        <div class="message info" id="admsInfo" style="margin-bottom:12px;"></div>
+        <div class="table-wrap" id="admsConteudo"></div>
+      </div>
+    </div>
+
     <!-- ===================== USUÁRIOS ===================== -->
     <div class="panel-view" id="view-usuarios">
       <div class="stock-card">
@@ -294,7 +308,7 @@
     window.__fbRes(Object.assign({}, appMod, authMod, fsMod, { app, auth: authMod.getAuth(app), db: fsMod.getFirestore(app) }));
   } catch (e) { console.error(e); window.__fbRej(e); }
 </script>
-<script src="motor.js?v=17"></script>
-<script src="app.js?v=17"></script>
+<script src="motor.js?v=18"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>

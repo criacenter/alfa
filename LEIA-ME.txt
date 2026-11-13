@@ -22,3 +22,10 @@ PRIMEIRO ACESSO
     crie a SUA conta (você vira o administrador).
   - Os outros dois criam a conta em "Criar conta" e ficam pendentes até
     você ativar na aba Usuários.
+
+ATUALIZAÇÃO 13/11 — ABA ADMINISTRADORAS
+- Nova aba "Administradoras": mostra o que cada administradora aceita em cada segmento, com as exigências.
+  A busca passou a usar essa tabela (só entram cartas de administradoras que atendem o segmento).
+- O administrador clica em "Editar" para ajustar e salvar. Fica salvo no Firebase (coleção regrasAdm).
+- É preciso publicar o firestore.rules novo (Firebase → Firestore → Regras → colar → Publicar).
+- Nomes de administradora são unificados pelo nome oficial (ex.: "H S" → HS Consórcios).

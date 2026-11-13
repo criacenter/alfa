@@ -30,10 +30,10 @@ service cloud.firestore {
     match /usuarios/{uid} {
       allow get: if logado() && (request.auth.uid == uid || ehAdmin());
       allow list: if ehAdmin();
-      // Conta nova sempre entra pendente, com regra e card da Alfa e sem acesso à base.
+      // Conta nova já entra ativa, com regra e card da Alfa e sem acesso à base.
       // A conta de administrador só pode ser criada junto com config/admin (configuração inicial).
       allow create: if logado() && request.auth.uid == uid && (
-        (request.resource.data.role == 'usuario' && request.resource.data.status == 'pendente'
+        (request.resource.data.role == 'usuario' && request.resource.data.status == 'ativo'
           && request.resource.data.regra == 'alfa' && request.resource.data.marca == 'alfa'
           && request.resource.data.podeBase == false)
         || (request.resource.data.role == 'admin'
@@ -49,6 +49,17 @@ service cloud.firestore {
     match /base/{lote} {
       allow read: if ativo() || ehAdmin();
       allow write: if podeBase();
+    }
+
+    // O que cada administradora atende por segmento: todos leem, só o administrador altera
+    match /regrasAdm/{doc} {
+      allow read: if ativo() || ehAdmin();
+      allow write: if ehAdmin();
+    }
+
+    // Controle de cards de divulgação já copiados (só o administrador)
+    match /divulgacao/{doc} {
+      allow read, write: if ehAdmin();
     }
   }
 }
