@@ -207,7 +207,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '13/11 · 16h30';
+  const VERSAO = '13/11 · 16h45';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -866,6 +866,11 @@
     }));
   }
 
+  function realocTxt(r) {
+    const nome = (g) => (M.SEGMENTOS[g] ? M.SEGMENTOS[g].nome.toLowerCase() : g);
+    const itens = Object.entries(r || {}).map(([k, n]) => { const [de, para] = k.split('>'); return `${n} carta${n > 1 ? 's' : ''} que também cabia${n > 1 ? 'm' : ''} em ${nome(de)} ${n > 1 ? 'foram' : 'foi'} para ${nome(para)}`; });
+    return itens.length ? ' (' + itens.join('; ') + ')' : '';
+  }
   /* ---------------- O que cada administradora atende ---------------- */
   let REGRAS = M.regrasAdm({});
   let REGRAS_SALVAS = {};
@@ -1225,7 +1230,7 @@
       return `<tr><td>${ARTES[seg].nome}</td><td class="mono">${g.naFaixa}</td><td class="mono${g.foraEntrada ? '" style="color:var(--danger-bright);' : ''}">${g.foraEntrada}</td><td class="mono${g.foraParcela ? '" style="color:var(--danger-bright);' : ''}">${g.foraParcela}</td><td class="mono" style="color:var(--ok);">${g.entram}</td><td class="mono">${pct(g.entradaMin)}</td></tr>`;
     }).join('');
     return `<details class="stock-card" style="margin-bottom:22px;" open><summary style="cursor:pointer; font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:600;">Por que as cartas saíram</summary>
-      <div class="section-sub" style="margin:10px 0 12px;">Só cartas comuns (as Oportunidades entram todas). Uma carta da Caixa pode contar em dois segmentos. ${D.semFaixa} carta(s) da base estão fora de todas as faixas de crédito.</div>
+      <div class="section-sub" style="margin:10px 0 12px;">Só cartas comuns (as Oportunidades entram todas). Cada carta aparece em um segmento só: quando cabe em dois, vai para aquele em que a administradora está melhor ranqueada${realocTxt(D.realocadas)}. ${D.semFaixa} carta(s) da base estão fora de todas as faixas de crédito.</div>
       <div class="table-wrap"><table class="data-table comp-table"><thead><tr><th>Segmento</th><th>Na faixa de crédito</th><th>Saíram pela entrada (35%)</th><th>Saíram pela parcela</th><th>Entram</th><th>Menor entrada da faixa</th></tr></thead>
       <tbody>${linhas || '<tr><td colspan="6" class="lote-vazio">Nenhuma carta comum dentro das faixas de crédito.</td></tr>'}</tbody></table></div>
       ${(D.fora || []).length ? `<div class="section-title" style="font-size:15px; margin:22px 0 4px;">Onde estão as ${D.semFaixa} cartas fora das faixas</div>
@@ -1239,7 +1244,7 @@
     if (!ehAdmin()) return;
     await carregarCopiados();
     await carregarTetos();
-    DIV = M.selecionarDivulgacao(BASE, { parcelaPct: TETOS });
+    DIV = M.selecionarDivulgacao(BASE, { parcelaPct: TETOS, regrasAdm: REGRAS });
     const out = $('divResultados');
     let h = '', total = 0;
     ORDEM_SEG.forEach((seg) => {

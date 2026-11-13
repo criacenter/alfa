@@ -574,8 +574,23 @@
   const SEG_COM_PROMO = ['leves', 'pesados', 'maquinas', 'imoveis', 'implementos'];
   const PROMO_POR_SEGMENTO = 2;
 
-  function segmentosDivulgacao(c) {
-    return DIV_FAIXAS.filter((f) => c.tipo === f.tipo && c.credito >= f.min && c.credito <= f.max && (!f.adm || c.adm === f.adm)).map((f) => f.seg);
+  // Posição de cada administradora no ranking de cada segmento (comparativo de 13/11/2026; 1 = melhor).
+  // Motos usa o ranking de veículos leves; máquinas = linha amarela.
+  const RANK_ADM = {"leves": {"HS Consórcios": 1, "BB Consórcios": 2, "Consórcio Magalu": 3, "Sicredi Consórcios": 4, "Itaú Consórcio": 5, "Mycon": 6, "Rodobens": 7, "Santander Consórcio": 8, "Consórcio Servopa": 9, "Disal Consórcio": 10, "Bradesco Consórcios": 11, "Consórcio Nacional Volkswagen": 12, "Consórcio Embracon": 13, "Zema Consórcio": 14, "Caixa Consórcios": 15, "CNP Consórcio": 16, "Porto Bank": 17, "Porto Bank VP": 18}, "pesados": {"HS Consórcios": 1, "BB Consórcios": 2, "Consórcio Magalu": 3, "Sicredi Consórcios": 4, "Mycon": 5, "Santander Consórcio": 6, "Rodobens": 7, "Itaú Consórcio": 8, "Consórcio Servopa": 9, "Consórcio Nacional Volkswagen": 10, "Consórcio Randon": 11, "Bradesco Consórcios": 12, "Zema Consórcio": 13, "Consórcio Embracon": 14, "Caixa Consórcios": 15, "Porto Bank VP": 16}, "implementos": {"Sicredi Consórcios": 1, "Mycon": 2, "Santander Consórcio": 3, "Itaú Consórcio": 4, "Consórcio Randon": 5, "Caixa Consórcios": 6, "Porto Bank VP": 7}, "solar": {"HS Consórcios": 1, "Sicredi Consórcios": 2, "Consórcio Magalu": 3, "Caixa Consórcios": 4, "BB Consórcios": 5, "Rodobens": 6, "Santander Consórcio": 7, "Porto Bank": 8, "Consórcio Embracon": 9}, "maquinas": {"Sicredi Consórcios": 1, "Caixa Consórcios": 2, "Santander Consórcio": 3, "Porto Bank VP": 4}, "imoveis": {"HS Consórcios": 1, "Sicredi Consórcios": 2, "BB Consórcios": 3, "Rodobens": 4, "Itaú Consórcio": 5, "Consórcio Magalu": 6, "Mycon": 7, "Bradesco Consórcios": 8, "Santander Consórcio": 9, "Consórcio Randon": 10, "Racon Consórcios": 11, "Consórcio Embracon": 12, "Caixa Consórcios": 13, "Porto Bank": 14, "CNP Consórcio": 15}, "motos": {"HS Consórcios": 1, "BB Consórcios": 2, "Consórcio Magalu": 3, "Sicredi Consórcios": 4, "Itaú Consórcio": 5, "Mycon": 6, "Rodobens": 7, "Santander Consórcio": 8, "Consórcio Servopa": 9, "Disal Consórcio": 10, "Bradesco Consórcios": 11, "Consórcio Nacional Volkswagen": 12, "Consórcio Embracon": 13, "Zema Consórcio": 14, "Caixa Consórcios": 15, "CNP Consórcio": 16, "Porto Bank": 17, "Porto Bank VP": 18}};
+  const ORDEM_DESEMPATE = ['leves', 'motos', 'pesados', 'imoveis', 'implementos', 'solar', 'maquinas'];
+  function posicaoRanking(adm, seg) { const r = RANK_ADM[seg] || {}; return r[adm] || 99; }
+  // Todos os segmentos em que a carta cabe (faixa de crédito + administradora que atende o segmento)
+  function segmentosPossiveis(c, regras) {
+    return DIV_FAIXAS.filter((f) => c.tipo === f.tipo && c.credito >= f.min && c.credito <= f.max
+      && (regras ? admAtende(regras, c.adm, f.seg) : (!f.adm || c.adm === f.adm))).map((f) => f.seg);
+  }
+  // Curadoria: a carta vai para um segmento só — onde a administradora está melhor ranqueada
+  function melhorSegmento(adm, segs) {
+    return segs.slice().sort((a, b) => (posicaoRanking(adm, a) - posicaoRanking(adm, b)) || (ORDEM_DESEMPATE.indexOf(a) - ORDEM_DESEMPATE.indexOf(b)))[0];
+  }
+  function segmentosDivulgacao(c, regras) {
+    const segs = segmentosPossiveis(c, regras);
+    return segs.length ? [melhorSegmento(c.adm, segs)] : [];
   }
   // Preço da divulgação: regra Jairo, sempre com parceiro e desconto progressivo
   function precoDivulgacao(c, seg) {
@@ -599,11 +614,12 @@
     };
   }
   // Segmento da arte para uma Oportunidade fora das faixas (todas as Oportunidades são divulgadas)
-  function segmentoPadrao(c) {
+  function segmentoPadrao(c, regras) {
     if (c.tipo === 'imovel') return 'imoveis';
     if (c.credito <= 55000) return 'motos';
     if (c.credito <= 165000) return 'leves';
-    if (c.credito <= 235000 || c.adm !== ADM_CAIXA) return 'pesados';
+    const fazMaquinas = regras ? admAtende(regras, c.adm, 'maquinas') : c.adm === ADM_CAIXA;
+    if (c.credito <= 235000 || !fazMaquinas) return 'pesados';
     return 'maquinas';
   }
   // Parcela máxima da divulgação, em % do crédito (a maior parcela da carta tem de caber)
@@ -618,11 +634,15 @@
     let semFaixa = 0;
     const fora = {};
     const oportunidades = [];
+    const regras = opcoes && opcoes.regrasAdm;
+    const realocadas = {};
     base.forEach((c) => {
-      const segs = segmentosDivulgacao(c);
+      const segs = segmentosDivulgacao(c, regras);
+      const possiveis = segmentosPossiveis(c, regras);
+      if (possiveis.length > 1) possiveis.filter((x) => x !== segs[0]).forEach((x) => { const k = x + '>' + segs[0]; realocadas[k] = (realocadas[k] || 0) + 1; });
       if (ehOportunidade(c)) {
-        // Oportunidade: todas entram, uma arte para cada segmento em que a carta se encaixa
-        (segs.length ? segs : [segmentoPadrao(c)]).forEach((seg) => oportunidades.push(itemDivulgacao(c, seg)));
+        // Oportunidade: todas entram, uma arte só (no segmento escolhido pela curadoria)
+        oportunidades.push(itemDivulgacao(c, segs.length ? segs[0] : segmentoPadrao(c, regras)));
         return;
       }
       if (!segs.length) {
@@ -657,7 +677,7 @@
       const normal = lista.filter((it) => !promoSet.has(it)).sort((a, b) => a.pctEntrada - b.pctEntrada);
       if (promo.length || normal.length) out[seg] = { promo, normal };
     });
-    return { segmentos: out, oportunidades, foraParcela, tetoParc, diag, semFaixa, fora: Object.values(fora).sort((a, b) => (a.tipo > b.tipo ? -1 : a.tipo < b.tipo ? 1 : a.min - b.min)) };
+    return { segmentos: out, oportunidades, foraParcela, tetoParc, diag, semFaixa, realocadas, fora: Object.values(fora).sort((a, b) => (a.tipo > b.tipo ? -1 : a.tipo < b.tipo ? 1 : a.min - b.min)) };
   }
 
   /* ---------------- Leitura das listas dos fornecedores ---------------- */
@@ -980,7 +1000,7 @@
     SEGMENTOS, FAIXAS_LIMITES, TAXAS_PADRAO, TRANSFERENCIA_PCT, TETO_PCT, AGIO_ALFA_PCT,
     precoPadrao, precificacaoJairo, precificacaoAlfa, precificar, fundoReserva, taxaMensalLinear, tirMensal,
     avaliar, validarJuncao, OBJETIVOS, cartasDoSegmento, buscar, textoProposta, periodosCliente, textoPeriodo, textoEntradaParcelada,
-    DIV_FAIXAS, SEG_COM_PROMO, PARCELA_PCT_PADRAO, PROMO_POR_SEGMENTO, segmentosDivulgacao, precoDivulgacao, itemDivulgacao, selecionarDivulgacao,
+    DIV_FAIXAS, RANK_ADM, posicaoRanking, segmentosPossiveis, melhorSegmento, SEG_COM_PROMO, PARCELA_PCT_PADRAO, PROMO_POR_SEGMENTO, segmentosDivulgacao, precoDivulgacao, itemDivulgacao, selecionarDivulgacao,
     lerLume, lerUni, lerFraga, lerFragaRotulos, lerRafael, lerLR, lerLista, mesclarRafael, expirarRafael, cartaValida
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = Motor;
