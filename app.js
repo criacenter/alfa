@@ -207,7 +207,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '13/11 · 16h45';
+  const VERSAO = '13/11 · 17h30';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -924,7 +924,7 @@
     });
     if (!lista.length) h += `<tr><td colspan="${segs.length + 2}" class="lote-vazio">Nenhuma administradora atende esse segmento.</td></tr>`;
     box.innerHTML = h + '</tbody></table>';
-    $('admsInfo').textContent = REGRAS_META && REGRAS_META.atualizadoEm ? 'Última edição em ' + fmtData(REGRAS_META.atualizadoEm) + '.' : 'Usando o comparativo de 13/11/2026 (ainda sem edições suas).';
+    $('admsInfo').textContent = REGRAS_META && REGRAS_META.atualizadoEm ? 'Última edição em ' + fmtData(REGRAS_META.atualizadoEm) + '.' : 'Usando o comparativo de 13/11/2026, revisado às 17h (ainda sem edições suas).';
   }
   if ($('admsSeg')) {
     $('admsSeg').addEventListener('change', renderAdms);
