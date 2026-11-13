@@ -27,7 +27,7 @@
   const ADM = {
     'BB Consórcios': {
       pf: ['Renda bruta de pelo menos 3× as parcelas de consórcio (as que já tem + esta)', 'Sem restrição no Serasa a partir de R$ 1.000, cheque sem fundo ou CADIN', 'Idade entre 18 e 79 anos'],
-      pj: ['Faturamento mensal médio de pelo menos 10× as parcelas', 'Conta no Banco do Brasil há mais de 12 meses'],
+      pj: ['Faturamento mensal médio de pelo menos 10× as parcelas'],
       veiculo: ['Vistoria obrigatória para carro acima de R$ 200 mil e para caminhão, semirreboque e ônibus', 'Pagamento ao vendedor em conta corrente (poupança não é aceita)'],
       imovel: ['Imóvel com matrícula individualizada e construção averbada', 'Construção ou reforma: projeto de engenheiro com CREA; o dinheiro sai em 3 etapas'],
       obs: ['Se a renda não fechar, pode ser pedido um fiador']
@@ -36,26 +36,27 @@
       pf: ['@renda Comprovante de renda: holerite, declaração de IR ou pró-labore', '@endereco Comprovante de residência de até 30 dias', 'Correntista Bradesco não precisa reenviar documentos pessoais'],
       pj: ['@faturamento Faturamento dos últimos 12 meses', '@endereco_pj Comprovante de endereço da empresa de até 30 dias', 'Declaração de IR da empresa'],
       usado: ['@crv DUT/ATPV preenchido e assinado com firma reconhecida (o valor pago é o menor entre FIPE/Molicar e o preço de venda)'],
-      veiculo: ['Não pode comprar de cônjuge nem de sócio da mesma empresa'],
+      veiculo: ['Leve ou pesado: até 10 anos de modelo', 'Não pode comprar de cônjuge nem de sócio da mesma empresa', 'Taxas de gravame, registro de contrato e vistoria são descontadas do crédito'],
       obs: ['Análise em até 1 dia útil com os documentos completos']
     },
     'Caixa Consórcios': {
       pf: ['@endereco Comprovante de residência de até 90 dias (pode estar em nome de parente de 1º grau)', '@renda Renda — assalariado: 2 últimos holerites ou IR completo', 'Renda — aposentado: 3 últimos extratos do benefício ou IR', 'Renda — autônomo ou sócio: IR completo + 3 meses de extratos', 'Se somar a renda do cônjuge: comprovante de renda dele(a)'],
-      pj: ['@endereco_pj Endereço da empresa de até 90 dias (MEI pode ser do titular)', '@faturamento Faturamento: balanço com DRE e balancete recente, ou declaração do Simples; DIPJ com recibo', 'Certidão simplificada da Junta Comercial'],
+      pj: ['@endereco_pj Endereço da empresa de até 90 dias (MEI pode ser do titular)', '@faturamento Faturamento: balanço com DRE dos 2 últimos exercícios e balancete recente, ou declaração do Simples com extrato; DIPJ com recibo', 'Certidão simplificada da Junta Comercial'],
       usado: ['Carro usado até 8 anos; pesado até 10 anos'],
       veiculo: ['Não aceita veículo de empresa da qual você é sócio, do cônjuge, pais, avós, filhos ou netos'],
       obs: ['Depois de aprovado, você tem 90 dias para usar o crédito']
     },
     'Consórcio Embracon': {
-      pf: ['@renda Comprovante de renda conforme a profissão (holerites, IR ou extratos)', 'Selfie segurando o documento'],
-      pj: ['@faturamento Extrato do Simples dos últimos 12 meses, ou ECF com recibo + balanço do último trimestre + DRE dos 4 trimestres', '@socios Todos os sócios: documentos pessoais, IR com recibo e 3 meses de extratos', 'Balancete semestral assinado pelo contador', 'Transportadora: contrato de serviço ou agregamento e lista da frota (ou CRLVs)'],
-      obs: ['A análise de crédito costuma sair em até 2 dias úteis']
+      pf: ['@renda Comprovante de renda (empresário ou sócio: declaração de IR com recibo + 3 meses de extratos e cópia do cartão do banco)', 'Selfie segurando o documento'],
+      pj: ['@endereco_pj Comprovante de endereço (conta do mês atual ou anterior) em nome da empresa ou de um sócio', '@contrato Contrato social e última alteração registrados na Junta Comercial', '@faturamento Extrato do Simples/SIMEI dos últimos 12 meses, ou ECF com recibo + balanço do último trimestre + DRE dos 4 trimestres', '@socios Todos os sócios: documentos pessoais, IR com recibo e 3 meses de extratos', 'Balancete semestral assinado pelo contador', 'Transportadora: contrato de serviço ou agregamento e lista da frota (ou CRLVs)'],
+      obs: ['A análise de crédito costuma sair em até 2 dias úteis', 'Pode ser pedido um devedor solidário (renda de 3× a parcela e sem restrição)']
     },
     'Consórcio Magalu': {
       pf_veiculo: ['@id CNH (preferencial) ou RG e CPF; sem CNH, a do motorista do veículo', '@endereco Comprovante de residência no mesmo endereço onde o veículo será registrado'],
       pf_imovel: ['@id RG e CPF em cópia simples (CNH não é aceita), seus e do cônjuge', '@estado_civil Certidão de estado civil emitida há no máximo 90 dias'],
       pf: ['@renda Renda CLT: 3 holerites ou 3 extratos (impressos no caixa ou PDF do app — print não vale) + fotos da carteira de trabalho', 'Renda autônomo: IR com recibo + comprovante de atividade, ou 3 extratos', 'Renda aposentado: 3 extratos do benefício + carta de concessão', 'Sem renda (estudante, do lar): fiador — pai/mãe ou cônjuge', 'Ficha cadastral preenchida e assinada'],
       pj: ['@socios RG, CPF e certidão de estado civil de todos os sócios e cônjuges', '@faturamento Extrato do Simples ou páginas da ECF (podem pedir 3 extratos da empresa)', 'Inscrição estadual ou municipal', 'Se o imóvel da empresa for alugado: comprovante de endereço do proprietário', 'Ficha cadastral'],
+      pj_imovel: ['Certidões: simplificada da Junta, negativa federal, distribuições cíveis, criminais e de executivos fiscais (Fórum e Justiça Federal), trabalhista e de falência e recuperação judicial', 'Carta de ciência'],
       novo: ['@nf Solicitação de faturamento e nota fiscal com alienação à Luiza Administradora de Consórcios'],
       usado: ['@vistoria 4 fotos (frente, traseira e laterais, placa legível) e pesquisa veicular', 'Carta de autorização de gravame assinada por comprador e vendedor'],
       veiculo: ['Taxa de gravame'],
@@ -76,7 +77,8 @@
       pf_imovel: ['@endereco Comprovante de residência de até 60 dias', 'Pacto antenupcial, conforme o regime de casamento'],
       pj_imovel: ['Certidão de breve relato da Junta (até 180 dias) e certidão negativa de débitos federais'],
       imovel: ['@iptu Cartela do IPTU, certidão de valor venal e negativa de IPTU (até 30 dias)', 'Não aceita imóvel com dívida de condomínio, impostos ou acordo em andamento', 'Venda de pai para filho: declaração dos herdeiros'],
-      obs: ['A análise vale 60 dias a partir da entrega completa dos documentos']
+      obs_imovel: ['A análise vale 60 dias a partir da entrega completa dos documentos'],
+      obs_veiculo: ['A análise sai em até 3 dias úteis e vale 3 meses'],
     },
     'Porto Bank VP': {
       pf: ['@id RG ou CNH dentro da validade'],
@@ -84,29 +86,30 @@
       novo: ['@nf Nota fiscal (a loja só emite depois da autorização de faturamento da Porto)'],
       usado: ['@crlv CRLV digital (acima de 3,5 t até 10 anos)'],
       veiculo: ['Se alguém representar o vendedor: procuração pública específica de até 90 dias'],
-      maquinas: ['Pedido de compra e CRLV de um veículo seu como garantia (máquina de revenda, até 2 anos)']
+      maquinas: ['Pedido de compra e CRLV de um veículo seu como garantia (máquina de revenda, até 2 anos)'],
+      obs: ['A análise sai em até 3 dias úteis e vale 3 meses']
     },
     'Santander Consórcio': {
       pf: ['Renda de 3× a prestação', 'Se não for correntista: firma reconhecida em cartório (ou assinatura digital gov.br)', 'Se usar procurador: procuração pública específica do consórcio, de até 1 ano'],
       pj: ['@contrato Contrato social atualizado (mesmo sendo correntista)', '@faturamento IR da empresa e faturamento dos últimos 12 meses com firma do contador', 'Um sócio como devedor solidário (exceto ME, EPP, MEI e S.A.)', 'O pagamento só vai para conta do CNPJ'],
       novo: ['@nf Nota fiscal de saída (veículo cadastrado na base BIN)'],
       usado: ['@crv DUT/CRV ou ATPV frente e verso', '@vistoria Vistoria online pelo portal'],
-      veiculo: ['Contrato de alienação preenchido, enviado em um único PDF', 'Taxas: gravame, registro de contrato e vistoria'],
+      veiculo: ['Carro usado até 9 anos; caminhão, ônibus e van até 7', 'Não aceita veículo de leilão, sinistrado, com chassi remarcado, do cônjuge ou de empresa da qual você foi sócio nos últimos 12 meses', 'Contrato de alienação preenchido, enviado em um único PDF', 'Taxas: gravame, registro de contrato e vistoria'],
       imovel: ['@iptu IPTU do ano', '@condominio Condomínio: declaração negativa do síndico com firma reconhecida', '@avaliacao Vistoria de engenharia e análise jurídica (com taxa)', 'Matrícula da vaga de garagem, se for separada', 'Reforma ou construção: cronograma, orçamento, memorial, projeto aprovado, alvará e ART/RRT'],
       transferencia: ['@termo Termo de transferência com firma reconhecida por autenticidade', 'Selfie do vendedor e do comprador segurando o documento'],
       obs: ['A análise de crédito é automática e sai em até 48 h']
     },
     'Consórcio Servopa': {
-      pf: ['@renda Comprovante de renda conforme a profissão (holerites ou declaração de IR)', 'Renda de 3× a prestação (somando cotas já contempladas) e nome sem restrição'],
-      pj: ['@faturamento Último balanço e DRE', 'Certidão simplificada da Junta Comercial (até 30 dias)', 'Fiador com renda compatível'],
+      pf: ['@renda Comprovante de renda conforme a profissão (holerites ou declaração de IR)', 'Casado(a): certidão de casamento e documentos do cônjuge', 'Renda de 3× a prestação (somando cotas já contempladas) e nome sem restrição'],
+      pj: ['@contrato Documentos de constituição da empresa', '@faturamento Último balanço e DRE', 'Certidão simplificada da Junta Comercial (até 30 dias)', 'Fiador com renda compatível'],
       usado: ['Carro e caminhão até 8 anos; moto abaixo de 500cc até 3 anos'],
       veiculo: ['Não aceita chassi remarcado, sinistro ou leilão'],
       imovel: ['Construção ou reforma em imóvel próprio é paga em etapas', 'Pode recusar imóvel com pendência, ação judicial ou transferido nos últimos 12 meses'],
       obs: ['A administradora responde em até 3 dias úteis']
     },
     'HS Consórcios': {
-      pf: ['@id CPF e identidade autenticados', '@renda Renda dos últimos 3 a 6 meses e última declaração de IR com a declaração de bens', 'Pacto antenupcial, se houver', 'Ficha cadastral', 'Renda líquida de 3× a prestação; o cônjuge também não pode ter restrição'],
-      pf_imovel: ['Certidões: Receita Federal, Fazenda Estadual, protesto, Justiça Federal, Trabalhista e distribuição cível e fiscal de 10 anos'],
+      pf: ['@id CPF e identidade autenticados', '@renda Renda dos últimos 3 a 6 meses, contrato de trabalho atual e última declaração de IR com a declaração de bens', 'Pacto antenupcial, se houver', 'Ficha cadastral', 'Renda líquida de 3× a prestação; o cônjuge também não pode ter restrição'],
+      pf_imovel: ['Certidões: Receita Federal, Fazenda Estadual, protesto, Justiça Federal, Trabalhista e distribuição cível e fiscal de 10 anos', 'Declaração de estado civil com firma reconhecida e duas testemunhas'],
       pj_imovel: ['Certidões da empresa e dos sócios: INSS, Receita Federal, Fazenda Estadual, protesto, Justiça Federal, Trabalhista e Junta Comercial'],
       pj: ['@contrato Contrato social com alterações, autenticado', '@faturamento Balanço e DRE, balancete atual, IR da empresa e faturamento de 12 meses', 'Ficha cadastral'],
       imovel: ['@vendedor Vendedor: documentos pessoais, dados bancários e certidões (cíveis 10 anos, protesto 5 anos, federal e trabalhista)', 'Imóvel: certidão vintenária, ITBI, plantas aprovadas, foto e cronograma do engenheiro'],
@@ -116,11 +119,11 @@
       pf: ['@id RG (com CPF) ou CNH'],
       pj_imovel: ['Certidão conjunta da Receita Federal'],
       usado: ['@crv Cópia da frente do CRV/DUT (se for de loja, também a nota fiscal de saída)'],
-      imovel: ['@iptu IPTU ou certidão de dados cadastrais', 'Comprovante de estado civil do vendedor', 'Kit eletrônico preenchido no portal', 'Terreno: também a planta do loteamento', 'Reforma ou construção: projeto aprovado, alvará e cronograma físico-financeiro'],
+      imovel: ['@iptu IPTU ou certidão de dados cadastrais', 'Comprovante de estado civil do vendedor (o seu também é exigido)', 'Kit eletrônico preenchido no portal', 'Terreno: também a planta do loteamento', 'Reforma ou construção: projeto aprovado, alvará e cronograma físico-financeiro'],
       obs: ['Resposta da análise em até 10 dias úteis']
     },
     'Consórcio Nacional Volkswagen': {
-      pf: ['@id CNH (obrigatória em cota de carro)', '@renda Renda CLT: carteira de trabalho + 3 holerites (6 se a renda for variável)', 'Renda autônomo: IR + 6 meses de extratos; empresário: IR + 3 extratos + alvará', 'Caminhoneiro ou taxista: CNH da categoria, CRLV, contrato de agregamento e IR ou 6 meses de fretes', 'Renda líquida de 3× a parcela (13º, férias e bônus não contam)', 'Ficha cadastral', 'Selfie'],
+      pf: ['@id CNH (obrigatória em cota de carro)', '@endereco Comprovante de residência do mês atual ou anterior (pode ser de parente de 1º grau que mora com você)', '@renda Renda CLT: carteira de trabalho + 3 holerites (6 se a renda for variável)', 'Renda autônomo: IR + 6 meses de extratos; empresário: IR + 3 extratos + alvará', 'Caminhoneiro ou taxista: CNH da categoria, CRLV, contrato de agregamento e IR ou 6 meses de fretes', 'Renda líquida de 3× a parcela (13º, férias e bônus não contam)', 'Ficha cadastral', 'Selfie'],
       pj: ['@faturamento Extrato do Simples/SIMEI de 12 meses, ou ECF + balanço + DRE', '@socios Todos os sócios: documentos de pessoa física', 'Balancete semestral assinado pelo contador'],
       novo: ['Pedido de compra da concessionária, dados bancários dela e carta de autorização de pagamento'],
       usado: ['@vistoria Laudo de vistoria (válido por 30 dias)', '@crv DUT autenticado'],
@@ -128,7 +131,7 @@
       obs: ['Depois de aprovado, você tem 90 dias para faturar']
     },
     'Disal Consórcio': {
-      pf: ['@endereco Comprovante de residência de até 90 dias'],
+      pf: ['@endereco Comprovante de residência de até 90 dias', 'União estável: declaração com firma reconhecida'],
       pj: ['Extratos bancários e IR da empresa com recibo'],
       veiculo: ['Envio dos documentos pela plataforma Cred+'],
       imovel: ['Vendedor: certidões de 2 anos de transações e 10 anos de ações', 'A avaliação do imóvel é descontada do crédito'],
@@ -138,8 +141,8 @@
       obs: ['Documentos enviados pela plataforma Credita (pelo computador, não pelo celular)']
     },
     'Sicredi Consórcios': {
-      pf: ['Ser associado da cooperativa Sicredi (abrir conta)'],
-      pj: ['A empresa também precisa ser associada']
+      pf: ['Pode ser exigido abrir conta (ser associado) na cooperativa Sicredi'],
+      pj: ['Pode ser exigido que a empresa abra conta na cooperativa']
     }
   };
 
@@ -166,7 +169,7 @@
     }
     secoes.push({ titulo: o.tipo === 'imovel' ? 'Imóvel e vendedor' : 'Documentos do bem', itens: uniq(bem) });
     secoes.push({ titulo: 'Transferência da cota', itens: uniq(aplicar(UNIVERSAL.transferencia, a.transferencia)) });
-    const obs = uniq((a.obs || []).concat(['A administradora pode pedir documentos adicionais durante a análise']));
+    const obs = uniq((a.obs || []).concat(a['obs_' + o.tipo] || [], ['A administradora pode pedir documentos adicionais durante a análise']));
     return { secoes, obs, temRegra: !!ADM[adm] };
   }
   function textoDocumentos(adm, opc) {
