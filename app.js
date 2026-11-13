@@ -207,7 +207,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '13/11 · 18h15';
+  const VERSAO = '13/11 · 19h00';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -834,7 +834,7 @@
     linhas.push(['Fundo de reserva (aprox.)', BRL(a.fundoReserva)]);
     const cotas = a.cotas.map((c) => `<div>${BRL(c.credito)} · entrada ${BRL(c.entrada)}${M.ehOportunidade(c) ? ' + ' + fmtFx(c.entradaParcelas) : ''} · ${fmtFx(c.etapas)} ${selosCarta(c)}</div>`).join('');
     return `
-      <div class="op-card" data-op="${i}">
+      <div class="op-card" data-op="${i}" data-seg="${esc(seg)}">
         <div class="op-head"><div class="op-rank">Opção ${i + 1} · ${esc(nForn)} · ${esc(a.adm)} · ${a.cotas.length} carta${a.cotas.length > 1 ? 's' : ''}</div><div>${badges}</div></div>
         <div class="op-stats">
           <div class="op-stat"><div class="label">Crédito</div><div class="value">${BRL(a.credito)}</div>${delta != null ? `<div class="sub ${Math.abs(delta) <= q.credito * 0.03 ? 'pos' : ''}">${delta >= 0 ? '+' : ''}${BRL(delta)} do pedido</div>` : ''}</div>
@@ -847,7 +847,7 @@
           <div class="cotas-list"><div style="font-family:Inter,sans-serif; color:var(--ink-dim); font-size:11px; text-transform:uppercase; letter-spacing:.05em;">Cotas usadas</div>${cotas}</div>
           ${exigenciasHTML(a.adm, seg)}
         </details>
-        <div class="op-actions"><button class="btn sm" data-acao="texto">Copiar texto</button><button class="btn sm" data-acao="vertexto">Ver texto</button><button class="btn primary sm" data-acao="card">Gerar card</button></div>
+        <div class="op-actions"><button class="btn sm" data-acao="texto">Copiar texto</button><button class="btn sm" data-acao="vertexto">Ver texto</button><button class="btn primary sm" data-acao="card">Gerar card</button><button class="btn sm" data-acao="docs">Gerar informativo de documentos</button></div>
         <div class="card-slot"></div>
       </div>`;
   }
@@ -863,6 +863,7 @@
       if (b.dataset.acao === 'texto') copiarTexto(M.textoProposta(a), b);
       if (b.dataset.acao === 'vertexto') slot.innerHTML = `<div class="texto-copia">${esc(M.textoProposta(a))}</div>`;
       if (b.dataset.acao === 'card') slot.innerHTML = cardPropostaHTML('card-op-' + box.dataset.op + '-' + Date.now(), a, marcaEU());
+      if (b.dataset.acao === 'docs') abrirInformativo(slot, a, box.dataset.seg || $('bSeg').value);
     }));
   }
 
@@ -954,6 +955,46 @@
       } catch (e) { $('admsInfo').innerHTML = '<span style="color:var(--danger-bright);">Não consegui salvar: ' + esc(traduzErro(e)) + '. Confira se as regras novas do Firebase foram publicadas.</span>'; }
       btn.disabled = false;
     });
+  }
+
+  /* ---------------- Informativo de documentos ---------------- */
+  function abrirInformativo(slot, a, seg) {
+    const tipo = (a.cotas[0] && a.cotas[0].tipo) || 'veiculo';
+    const id = 'card-doc-' + Date.now();
+    slot.innerHTML = `<div class="doc-ctrl">
+        <div class="field"><label>Cliente</label><select data-doc-pessoa><option value="pf">Pessoa física</option><option value="pj">Pessoa jurídica</option></select></div>
+        ${tipo === 'veiculo' ? `<div class="field"><label>Bem</label><select data-doc-estado><option value="ambos">0 km ou usado (ainda não sabe)</option><option value="novo">0 km</option><option value="usado">Usado</option></select></div>` : ''}
+        <button class="btn sm" data-doc-texto>Copiar texto</button></div>
+      <div data-doc-card></div>`;
+    const montar = () => {
+      const opc = { pessoa: slot.querySelector('[data-doc-pessoa]').value, tipo, seg, estado: slot.querySelector('[data-doc-estado]') ? slot.querySelector('[data-doc-estado]').value : 'ambos' };
+      slot.querySelector('[data-doc-card]').innerHTML = cardDocumentosHTML(id, a.adm, opc, marcaEU());
+      return opc;
+    };
+    let opc = montar();
+    slot.querySelectorAll('select').forEach((s) => s.addEventListener('change', () => { opc = montar(); }));
+    slot.querySelector('[data-doc-texto]').addEventListener('click', (e) => copiarTexto(DOCS.textoDocumentos(a.adm, opc), e.currentTarget));
+  }
+  function cardDocumentosHTML(id, adm, opc, marca) {
+    const d = DOCS.documentosAdm(adm, opc);
+    const logo = M.logoAdm(adm);
+    const bemTxt = opc.tipo === 'imovel' ? 'Imóvel' : (M.SEGMENTOS[opc.seg] ? M.SEGMENTOS[opc.seg].nome : 'Veículo') + (opc.estado === 'novo' ? ' · 0 km' : opc.estado === 'usado' ? ' · usado' : '');
+    return `
+      <div class="oferta-card doc-card ${marca === 'alfa' ? 'marca-alfa' : 'dark'}" id="${id}">
+        ${cabecalhoCard(id, marca, 'Documentação')}
+        <div class="oferta-body">
+          <div class="oferta-eyebrow">Para liberar sua carta de crédito</div>
+          <div class="oferta-headline-row"><div class="oferta-headline">Documentos <span class="amount">necessários</span></div>
+            ${logo ? `<img class="oferta-admin-logo" src="${logo}" alt="${esc(adm)}">` : ''}</div>
+          <div class="oferta-title-sub">${esc(adm)} · ${opc.pessoa === 'pj' ? 'Pessoa jurídica' : 'Pessoa física'} · ${esc(bemTxt)}</div>
+          <div class="doc-grid">
+            ${d.secoes.map((s) => `<div class="doc-sec"><div class="doc-sec-tit">${esc(s.titulo)}</div><ul>${s.itens.map((i) => `<li contenteditable="true" spellcheck="false">${esc(i)}</li>`).join('')}</ul></div>`).join('')}
+          </div>
+          <div class="doc-obs"><div class="doc-sec-tit">Importante</div><ul>${d.obs.map((i) => `<li contenteditable="true" spellcheck="false">${esc(i)}</li>`).join('')}</ul></div>
+        </div>
+        ${rodapeCard(marca)}
+      </div>
+      <div class="oferta-actions"><button class="btn primary" data-copiar-card="${id}">📋 Copiar imagem (WhatsApp)</button></div>`;
   }
 
   /* ---------------- Montar manualmente ---------------- */

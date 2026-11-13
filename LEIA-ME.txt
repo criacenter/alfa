@@ -33,3 +33,5 @@ ATUALIZAÇÃO 13/11 — ABA ADMINISTRADORAS
   (onde a administradora está melhor ranqueada no comparativo), sem duplicar artes.
 - Aba Administradoras: cada administradora tem campos de Pessoa física, Pessoa jurídica e Transferência
   (renda exigida, documentos, taxa de cessão). Aparecem também nos "Detalhes para a equipe" da busca.
+- docs.js: lista de documentos por administradora (o que é comum a todas + o que cada uma pede a mais,
+  separado em PF/PJ, veículo/imóvel). Usado pelo botão "Gerar informativo de documentos" da busca.

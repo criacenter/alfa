@@ -1289,3 +1289,17 @@ textarea.inp{ min-height:150px; resize:vertical; font-family:'JetBrains Mono',mo
 .adm-table tr.adm-geral td strong{ color:var(--ink); font-weight:600; }
 .adm-ex-rot{ display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); margin:6px 0 2px; }
 .adm-table textarea{ width:100%; font-size:12px; padding:5px 7px; resize:vertical; }
+
+/* ---------- Informativo de documentos ---------- */
+.doc-ctrl{ display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin:12px 0; }
+.doc-ctrl .field{ margin:0; min-width:180px; }
+.doc-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px 26px; margin-top:18px; }
+.doc-sec, .doc-obs{ background:var(--oc-surface); border:1px solid var(--oc-border); border-radius:12px; padding:14px 16px; }
+.doc-sec:first-child{ grid-row: span 2; }
+.doc-sec-tit{ font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--oc-accent); margin-bottom:8px; }
+.doc-card ul{ list-style:none; margin:0; padding:0; }
+.doc-card li{ position:relative; padding-left:20px; font-size:12.5px; line-height:1.45; color:var(--oc-ink); margin-bottom:6px; outline:none; }
+.doc-card li::before{ content:''; position:absolute; left:0; top:3px; width:11px; height:11px; border:1.5px solid var(--oc-accent); border-radius:3px; }
+.doc-obs{ margin-top:16px; border-left:3px solid var(--oc-accent); }
+.doc-obs li::before{ border-radius:50%; width:6px; height:6px; top:6px; left:3px; background:var(--oc-accent); border:none; }
+@media (max-width:640px){ .doc-grid{ grid-template-columns:1fr; } .doc-sec:first-child{ grid-row:auto; } }
