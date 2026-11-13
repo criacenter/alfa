@@ -207,7 +207,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '13/11 · 17h30';
+  const VERSAO = '13/11 · 18h15';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -891,10 +891,12 @@
     return '';
   }
   function exigenciasHTML(adm, seg) {
-    const r = M.regraAdmSeg(REGRAS, adm, seg), g = (REGRAS[adm] || {})._geral;
-    if (!r.nota && !g && r.st === 'S') return '';
+    const r = M.regraAdmSeg(REGRAS, adm, seg), R = REGRAS[adm] || {}, g = R._geral;
+    const comprador = [['Pessoa física', R._pf], ['Pessoa jurídica', R._pj], ['Transferência', R._cessao]].filter((x) => x[1]);
+    if (!r.nota && !g && r.st === 'S' && !comprador.length) return '';
     return `<div class="exig-box"><div class="exig-tit">Exigências da ${esc(adm)} · ${esc(M.SEGMENTOS[seg] ? M.SEGMENTOS[seg].nome : '')}</div>
-      <div><strong>${esc(M.ST_ADM[r.st])}</strong>${r.nota ? ' — ' + esc(r.nota) : ''}</div>${g ? `<div style="margin-top:4px;">${esc(g)}</div>` : ''}</div>`;
+      <div><strong>${esc(M.ST_ADM[r.st])}</strong>${r.nota ? ' — ' + esc(r.nota) : ''}</div>${g ? `<div style="margin-top:4px;">${esc(g)}</div>` : ''}
+      ${comprador.map((x) => `<div style="margin-top:4px;"><strong>${x[0]}:</strong> ${esc(x[1])}</div>`).join('')}</div>`;
   }
   const SEG_ORDEM_ADM = ['leves', 'motos', 'pesados', 'implementos', 'maquinas', 'solar', 'imoveis'];
   const SEG_CURTO = { leves: 'Leves', motos: 'Motos', pesados: 'Pesados', implementos: 'Implementos', maquinas: 'Linha amarela', solar: 'Solar', imoveis: 'Imóveis' };
@@ -919,8 +921,12 @@
         else h += `<td class="adm-cel st-${c.st === '?' ? 'nc' : c.st}"><span class="adm-simb">${SIMB_ADM[c.st]}</span>${c.nota ? `<small>${esc(c.nota)}</small>` : ''}</td>`;
       });
       h += '</tr>';
-      if (ADMS_EDITANDO) h += `<tr data-geral="${esc(a)}"><td colspan="${segs.length + 2}"><input data-g="1" value="${esc(r._geral)}" placeholder="Exigências gerais da ${esc(a)} (taxa de transferência, avalista, conta, prazo de liberação...)"></td></tr>`;
-      else if (r._geral) h += `<tr class="adm-geral"><td colspan="${segs.length + 2}">${esc(r._geral)}</td></tr>`;
+      const extras = [['_geral', 'Geral', 'Outras exigências da ' + a], ['_pf', 'Pessoa física', 'Renda, documentos, restrições'], ['_pj', 'Pessoa jurídica', 'Faturamento, contrato social, sócios, fiador'], ['_cessao', 'Transferência', 'Taxa, análise do comprador, prazo']];
+      if (ADMS_EDITANDO) h += `<tr data-geral="${esc(a)}"><td colspan="${segs.length + 2}">${extras.map(([k, rot, ph]) => `<label class="adm-ex-rot">${rot}</label><textarea data-ex="${k}" rows="2" placeholder="${esc(ph)}">${esc(r[k] || '')}</textarea>`).join('')}</td></tr>`;
+      else {
+        const linhas = extras.filter(([k]) => r[k]).map(([k, rot]) => `<div><strong>${rot}:</strong> ${esc(r[k])}</div>`).join('');
+        if (linhas) h += `<tr class="adm-geral"><td colspan="${segs.length + 2}">${linhas}</td></tr>`;
+      }
     });
     if (!lista.length) h += `<tr><td colspan="${segs.length + 2}" class="lote-vazio">Nenhuma administradora atende esse segmento.</td></tr>`;
     box.innerHTML = h + '</tbody></table>';
@@ -935,8 +941,7 @@
       document.querySelectorAll('#admsConteudo tr[data-adm]').forEach((tr) => {
         const a = tr.dataset.adm, o = {};
         tr.querySelectorAll('select[data-seg]').forEach((sel) => { o[sel.dataset.seg] = { st: sel.value, nota: tr.querySelector(`[data-nota="${sel.dataset.seg}"]`).value.trim() }; });
-        const g = document.querySelector(`#admsConteudo tr[data-geral="${CSS.escape(a)}"] input`);
-        o._geral = g ? g.value.trim() : '';
+        document.querySelectorAll(`#admsConteudo tr[data-geral="${CSS.escape(a)}"] [data-ex]`).forEach((t) => { o[t.dataset.ex] = t.value.trim(); });
         adms[a] = o;
       });
       const btn = $('admsSalvar'); btn.disabled = true;

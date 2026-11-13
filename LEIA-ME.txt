@@ -31,3 +31,5 @@ ATUALIZAÇÃO 13/11 — ABA ADMINISTRADORAS
 - Nomes de administradora são unificados pelo nome oficial (ex.: "H S" → HS Consórcios).
 - Divulgação: segue a mesma tabela da aba Administradoras. Cada carta entra em um segmento só
   (onde a administradora está melhor ranqueada no comparativo), sem duplicar artes.
+- Aba Administradoras: cada administradora tem campos de Pessoa física, Pessoa jurídica e Transferência
+  (renda exigida, documentos, taxa de cessão). Aparecem também nos "Detalhes para a equipe" da busca.

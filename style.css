@@ -1284,3 +1284,8 @@ textarea.inp{ min-height:150px; resize:vertical; font-family:'JetBrains Mono',mo
 .st-S .adm-simb{ color:var(--ok); } .st-R .adm-simb{ color:var(--gold-bright); } .st-N .adm-simb{ color:var(--ink-dim); } .st-nc .adm-simb{ color:var(--ink-dim); opacity:.6; }
 .adm-table tr.adm-geral td{ font-size:12px; color:var(--ink-dim); border-top:none; padding-top:0; }
 .adm-table select, .adm-table input{ width:100%; font-size:12px; padding:4px 6px; margin-bottom:3px; }
+
+.adm-table tr.adm-geral td div{ margin-bottom:3px; }
+.adm-table tr.adm-geral td strong{ color:var(--ink); font-weight:600; }
+.adm-ex-rot{ display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); margin:6px 0 2px; }
+.adm-table textarea{ width:100%; font-size:12px; padding:5px 7px; resize:vertical; }
