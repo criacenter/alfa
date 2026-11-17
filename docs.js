@@ -68,12 +68,12 @@
       obs: ['Análise do comprador em até 5 dias úteis']
     },
     'Porto Bank': {
-      pf: ['@id RG ou CNH dentro da validade'],
-      pj: ['@contrato Contrato social com as alterações'],
+      pf: ['@id RG ou CNH dentro da validade', '@renda Declaração de IR completa com recibo + renda conforme o perfil: CLT ou servidor, último holerite (comissionado, os 3 últimos); autônomo, profissional liberal ou produtor rural, DECORE do contador do mês atual ou anterior'],
+      pj: ['@contrato Contrato social com as alterações', '@faturamento Último demonstrativo de resultados (DRE) e declaração de IR da empresa com recibo', '@socios Documentos pessoais e DECORE de cada sócio (mês atual ou anterior)'],
       novo: ['@nf Nota fiscal (a loja só emite depois da autorização de faturamento da Porto)'],
       usado: ['@crlv CRLV digital (carro até 8 anos)'],
       veiculo: ['Se alguém representar o vendedor: procuração pública específica de até 90 dias'],
-      solar: ['Especificação dos painéis, pedido de compra e CRLV de um veículo seu como garantia'],
+      solar: ['Especificação dos painéis, pedido de compra e CRLV de um veículo seu como garantia complementar'],
       pf_imovel: ['@endereco Comprovante de residência de até 60 dias', 'Pacto antenupcial, conforme o regime de casamento'],
       pj_imovel: ['Certidão de breve relato da Junta (até 180 dias) e certidão negativa de débitos federais'],
       imovel: ['@iptu Cartela do IPTU, certidão de valor venal e negativa de IPTU (até 30 dias)', 'Não aceita imóvel com dívida de condomínio, impostos ou acordo em andamento', 'Venda de pai para filho: declaração dos herdeiros'],
@@ -81,12 +81,12 @@
       obs_veiculo: ['A análise sai em até 3 dias úteis e vale 3 meses'],
     },
     'Porto Bank VP': {
-      pf: ['@id RG ou CNH dentro da validade'],
-      pj: ['@contrato Contrato social com as alterações'],
+      pf: ['@id RG ou CNH dentro da validade', '@renda Declaração de IR completa com recibo + renda conforme o perfil: CLT ou servidor, último holerite (comissionado, os 3 últimos); autônomo, profissional liberal ou produtor rural, DECORE do contador do mês atual ou anterior'],
+      pj: ['@contrato Contrato social com as alterações', '@faturamento Último demonstrativo de resultados (DRE) e declaração de IR da empresa com recibo', '@socios Documentos pessoais e DECORE de cada sócio (mês atual ou anterior)'],
       novo: ['@nf Nota fiscal (a loja só emite depois da autorização de faturamento da Porto)'],
       usado: ['@crlv CRLV digital (acima de 3,5 t até 10 anos)'],
       veiculo: ['Se alguém representar o vendedor: procuração pública específica de até 90 dias'],
-      maquinas: ['Pedido de compra e CRLV de um veículo seu como garantia (máquina de revenda, até 2 anos)'],
+      maquinas: ['Máquina até 2 anos, comprada de revenda ou distribuidor autorizado', 'Garantia obrigatória: CRLV de um caminhão, implemento, ônibus ou automóvel seu, de até 6 anos, valendo pelo menos o saldo devedor da cota'],
       obs: ['A análise sai em até 3 dias úteis e vale 3 meses']
     },
     'Santander Consórcio': {

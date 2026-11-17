@@ -207,7 +207,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '13/11 · 20h00';
+  const VERSAO = '17/11 · 12h15';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
