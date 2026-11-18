@@ -207,7 +207,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '17/11 · 12h15';
+  const VERSAO = '18/11 · 17h00';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -768,7 +768,7 @@
       entradaAlvo: num($('bEntAlvo').value), parcelaAlvo: num($('bParcAlvo').value),
       entradaMax: num($('bEntMax').value), parcelaMax: num($('bParcMax').value),
       tolerancia: Math.min(Math.max(num($('bTol').value) || 15, 1), 60) / 100, qtd: +$('bQtd').value,
-      regra: regraEU(), params: paramsPreco(), regrasAdm: REGRAS
+      regra: regraEU(), params: paramsPreco(), regrasAdm: regrasBusca()
     };
     const out = $('buscaResultados');
     if (!BASE.length) { out.innerHTML = '<div class="message warn">A base de cartas está vazia.</div>'; return; }
@@ -885,7 +885,26 @@
     REGRAS = M.regrasAdm(REGRAS_SALVAS);
   }
   let REGRAS_META = null;
+  const leilaoAtivo = () => !!($('bLeilao') && $('bLeilao').checked && M.SEG_LEILAO.includes($('bSeg').value));
+  function regrasBusca() { return leilaoAtivo() ? M.regrasSemLeilao(REGRAS) : REGRAS; }
+  function sincronizarLeilao() {
+    const w = $('bLeilaoWrap'); if (!w) return;
+    w.hidden = !M.SEG_LEILAO.includes($('bSeg').value);
+  }
+  if ($('bLeilao')) {
+    $('bSeg').addEventListener('change', sincronizarLeilao);
+    $('bLeilao').addEventListener('change', () => { MANUAL.clear(); if (!$('manualWrap').hidden) { preencherFiltrosManual(); renderManual(); } });
+    setTimeout(sincronizarLeilao, 0);
+  }
   function seloAdm(adm, seg) {
+    if (leilaoAtivo()) {
+      const l = (REGRAS[adm] || {})._leilao || { st: '?' };
+      if (l.st === '?') return `<span class="selo amarelo" title="${esc(l.nota || '')}">leilão: confirmar com a adm</span>` + seloAdmBase(adm, seg);
+      if (l.st === 'S') return '<span class="selo verde">aceita leilão</span>' + seloAdmBase(adm, seg);
+    }
+    return seloAdmBase(adm, seg);
+  }
+  function seloAdmBase(adm, seg) {
     const r = M.regraAdmSeg(REGRAS, adm, seg);
     if (r.st === 'R') return `<span class="selo amarelo" title="${esc(r.nota)}">adm com restrição neste segmento</span>`;
     if (r.st === '?') return '<span class="selo cinza">aceitação da adm a confirmar</span>';
@@ -894,6 +913,7 @@
   function exigenciasHTML(adm, seg) {
     const r = M.regraAdmSeg(REGRAS, adm, seg), R = REGRAS[adm] || {}, g = R._geral;
     const comprador = [['Pessoa física', R._pf], ['Pessoa jurídica', R._pj], ['Transferência', R._cessao]].filter((x) => x[1]);
+    if (M.SEG_LEILAO.includes(seg) && R._leilao) comprador.push(['Leilão', ({ S: 'Aceita', N: 'Não aceita', '?': 'Não informa' })[R._leilao.st] + (R._leilao.nota ? ' — ' + R._leilao.nota : '')]);
     if (!r.nota && !g && r.st === 'S' && !comprador.length) return '';
     return `<div class="exig-box"><div class="exig-tit">Exigências da ${esc(adm)} · ${esc(M.SEGMENTOS[seg] ? M.SEGMENTOS[seg].nome : '')}</div>
       <div><strong>${esc(M.ST_ADM[r.st])}</strong>${r.nota ? ' — ' + esc(r.nota) : ''}</div>${g ? `<div style="margin-top:4px;">${esc(g)}</div>` : ''}
@@ -924,8 +944,11 @@
       h += '</tr>';
       const extras = [['_geral', 'Geral', 'Outras exigências da ' + a], ['_pf', 'Pessoa física', 'Renda, documentos, restrições'], ['_pj', 'Pessoa jurídica', 'Faturamento, contrato social, sócios, fiador'], ['_cessao', 'Transferência', 'Taxa, análise do comprador, prazo']];
       if (ADMS_EDITANDO) h += `<tr data-geral="${esc(a)}"><td colspan="${segs.length + 2}">${extras.map(([k, rot, ph]) => `<label class="adm-ex-rot">${rot}</label><textarea data-ex="${k}" rows="2" placeholder="${esc(ph)}">${esc(r[k] || '')}</textarea>`).join('')}</td></tr>`;
+      const LST = { S: 'Aceita', N: 'Não aceita', '?': 'Não informa' };
+      if (ADMS_EDITANDO) h = h.replace(/<\/td><\/tr>$/, `<label class="adm-ex-rot">Veículo com passagem por leilão</label><select data-leilao>${Object.keys(LST).map((k) => `<option value="${k}"${k === r._leilao.st ? ' selected' : ''}>${LST[k]}</option>`).join('')}</select><input data-leilao-nota value="${esc(r._leilao.nota || '')}" placeholder="De onde vem a regra"></td></tr>`);
       else {
-        const linhas = extras.filter(([k]) => r[k]).map(([k, rot]) => `<div><strong>${rot}:</strong> ${esc(r[k])}</div>`).join('');
+        const linhas = extras.filter(([k]) => r[k]).map(([k, rot]) => `<div><strong>${rot}:</strong> ${esc(r[k])}</div>`).join('')
+          + `<div><strong>Leilão:</strong> ${LST[r._leilao.st]}${r._leilao.nota ? ' — ' + esc(r._leilao.nota) : ''}</div>`;
         if (linhas) h += `<tr class="adm-geral"><td colspan="${segs.length + 2}">${linhas}</td></tr>`;
       }
     });
@@ -942,7 +965,11 @@
       document.querySelectorAll('#admsConteudo tr[data-adm]').forEach((tr) => {
         const a = tr.dataset.adm, o = {};
         tr.querySelectorAll('select[data-seg]').forEach((sel) => { o[sel.dataset.seg] = { st: sel.value, nota: tr.querySelector(`[data-nota="${sel.dataset.seg}"]`).value.trim() }; });
-        document.querySelectorAll(`#admsConteudo tr[data-geral="${CSS.escape(a)}"] [data-ex]`).forEach((t) => { o[t.dataset.ex] = t.value.trim(); });
+        const trg = document.querySelector(`#admsConteudo tr[data-geral="${CSS.escape(a)}"]`);
+        if (trg) {
+          trg.querySelectorAll('[data-ex]').forEach((t) => { o[t.dataset.ex] = t.value.trim(); });
+          const ls = trg.querySelector('[data-leilao]'); if (ls) o._leilao = { st: ls.value, nota: trg.querySelector('[data-leilao-nota]').value.trim() };
+        }
         adms[a] = o;
       });
       const btn = $('admsSalvar'); btn.disabled = true;
@@ -1002,7 +1029,7 @@
   $('btnManual').addEventListener('click', () => { $('manualWrap').hidden = !$('manualWrap').hidden; if (!$('manualWrap').hidden) { preencherFiltrosManual(); renderManual(); } });
   $('bSeg').addEventListener('change', () => { MANUAL.clear(); if (!$('manualWrap').hidden) { preencherFiltrosManual(); renderManual(); } });
   function preencherFiltrosManual() {
-    const lista = M.cartasDoSegmento(BASE, $('bSeg').value, REGRAS);
+    const lista = M.cartasDoSegmento(BASE, $('bSeg').value, regrasBusca());
     const vF = $('mFornecedor').value, vA = $('mAdm').value;
     const forns = [...new Set(lista.map((c) => c.fornecedor))];
     const adms = [...new Set(lista.map((c) => c.adm))].sort();
@@ -1013,7 +1040,7 @@
   }
   function renderManual() {
     const f = $('mFornecedor').value, a = $('mAdm').value, b = num($('mBusca').value);
-    let lista = M.cartasDoSegmento(BASE, $('bSeg').value, REGRAS).filter((c) => (!f || c.fornecedor === f) && (!a || c.adm === a));
+    let lista = M.cartasDoSegmento(BASE, $('bSeg').value, regrasBusca()).filter((c) => (!f || c.fornecedor === f) && (!a || c.adm === a));
     if (b > 0) lista = lista.filter((c) => Math.abs(c.credito - b) <= b * 0.15);
     lista.sort((x, y) => x.credito - y.credito);
     const mostrar = lista.slice(0, 300);

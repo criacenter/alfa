@@ -42,8 +42,11 @@
     'Caixa Consórcios': {
       pf: ['@endereco Comprovante de residência de até 90 dias (pode estar em nome de parente de 1º grau)', '@renda Renda — assalariado: 2 últimos holerites ou IR completo', 'Renda — aposentado: 3 últimos extratos do benefício ou IR', 'Renda — autônomo ou sócio: IR completo + 3 meses de extratos', 'Se somar a renda do cônjuge: comprovante de renda dele(a)'],
       pj: ['@endereco_pj Endereço da empresa de até 90 dias (MEI pode ser do titular)', '@faturamento Faturamento: balanço com DRE dos 2 últimos exercícios e balancete recente, ou declaração do Simples com extrato; DIPJ com recibo', 'Certidão simplificada da Junta Comercial'],
-      usado: ['Carro usado até 8 anos; pesado até 10 anos'],
+      usado: ['Carro usado até 8 anos (sem contar o ano atual); pesado até 10 anos', '@vistoria Vistoria por empresa indicada pela Caixa (o valor considera a FIPE e o estado do carro)', 'Não aceita veículo com histórico de leilão, adaptado ou modificado'],
       veiculo: ['Não aceita veículo de empresa da qual você é sócio, do cônjuge, pais, avós, filhos ou netos'],
+      pj_veiculo: [],
+      maquinas: ['Máquina nova, com chassi ou número de série, vendida por empresa; nota fiscal em nome da XS5 Administradora de Consórcios, enviada só depois da aprovação do crédito', 'Registro do contrato de venda no Cartório de Títulos e Documentos', 'Empresa: balanço do último ano com DRE + 1 balancete recente; no Simples, a Declaração Anual do Simples completa com extrato'],
+      solar: ['O crédito não pode pagar a instalação, só o equipamento'],
       obs: ['Depois de aprovado, você tem 90 dias para usar o crédito']
     },
     'Consórcio Embracon': {
@@ -163,6 +166,7 @@
     if (o.tipo === 'imovel') bem = aplicar(UNIVERSAL.imovel, a.imovel);
     else {
       const dois = o.estado === 'ambos';
+      if (o.seg === 'maquinas' || o.seg === 'solar') { bem = bem.concat(UNIVERSAL.seg[o.seg] || [], a[o.seg] || []); secoes.push({ titulo: 'Documentos do bem', itens: uniq(bem) }); secoes.push({ titulo: 'Transferência da cota', itens: uniq(aplicar(UNIVERSAL.transferencia, a.transferencia)) }); return { secoes, obs: uniq((a.obs || []).concat(a['obs_' + o.tipo] || [], ['A administradora pode pedir documentos adicionais durante a análise'])), temRegra: !!ADM[adm] }; }
       if (o.estado !== 'usado') bem = bem.concat(aplicar(UNIVERSAL.novo, a.novo, dois ? '0 km: ' : ''));
       if (o.estado !== 'novo') bem = bem.concat(aplicar(UNIVERSAL.usado, a.usado, dois ? 'Usado: ' : ''));
       bem = bem.concat(UNIVERSAL.seg[o.seg] || [], a[o.seg] || [], a.veiculo || []);

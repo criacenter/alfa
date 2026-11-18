@@ -35,3 +35,5 @@ ATUALIZAÇÃO 13/11 — ABA ADMINISTRADORAS
   (renda exigida, documentos, taxa de cessão). Aparecem também nos "Detalhes para a equipe" da busca.
 - docs.js: lista de documentos por administradora (o que é comum a todas + o que cada uma pede a mais,
   separado em PF/PJ, veículo/imóvel). Usado pelo botão "Gerar informativo de documentos" da busca.
+- Busca (leves, motos, pesados): caixa "Veículo com passagem por leilão" esconde as administradoras que recusam
+  leilão. A regra de cada uma fica na aba Administradoras (campo Leilão, editável pelo administrador).

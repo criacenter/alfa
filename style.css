@@ -1303,3 +1303,7 @@ textarea.inp{ min-height:150px; resize:vertical; font-family:'JetBrains Mono',mo
 .doc-obs{ margin-top:16px; border-left:3px solid var(--oc-accent); }
 .doc-obs li::before{ border-radius:50%; width:6px; height:6px; top:6px; left:3px; background:var(--oc-accent); border:none; }
 @media (max-width:640px){ .doc-grid{ grid-template-columns:1fr; } .doc-sec:first-child{ grid-row:auto; } }
+
+.check-row{ display:flex; gap:8px; align-items:flex-start; margin:4px 0 14px; font-size:13px; color:var(--ink-dim); cursor:pointer; }
+.check-row input{ margin-top:3px; }
+.check-row[hidden]{ display:none; }
