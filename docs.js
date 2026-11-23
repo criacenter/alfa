@@ -57,14 +57,14 @@
     'Consórcio Magalu': {
       pf_veiculo: ['@id CNH (preferencial) ou RG e CPF; sem CNH, a do motorista do veículo', '@endereco Comprovante de residência no mesmo endereço onde o veículo será registrado'],
       pf_imovel: ['@id RG e CPF em cópia simples (CNH não é aceita), seus e do cônjuge', '@estado_civil Certidão de estado civil emitida há no máximo 90 dias'],
-      pf: ['@renda Renda CLT: 3 holerites ou 3 extratos (impressos no caixa ou PDF do app — print não vale) + fotos da carteira de trabalho', 'Renda autônomo: IR com recibo + comprovante de atividade, ou 3 extratos', 'Renda aposentado: 3 extratos do benefício + carta de concessão', 'Sem renda (estudante, do lar): fiador — pai/mãe ou cônjuge', 'Ficha cadastral preenchida e assinada'],
-      pj: ['@socios RG, CPF e certidão de estado civil de todos os sócios e cônjuges', '@faturamento Extrato do Simples ou páginas da ECF (podem pedir 3 extratos da empresa)', 'Inscrição estadual ou municipal', 'Se o imóvel da empresa for alugado: comprovante de endereço do proprietário', 'Ficha cadastral'],
+      pf: ['@renda Renda CLT: 3 holerites ou 3 extratos (impressos no caixa ou PDF do app — print não vale) + fotos da carteira de trabalho', 'Renda autônomo: IR com recibo + comprovante de atividade, ou 3 extratos', 'Renda aposentado: 3 extratos do benefício + carta de concessão', 'Sem renda (estudante, do lar): fiador — pai/mãe ou cônjuge', 'A renda precisa ser de mais de 5× a mensalidade', 'Ficha cadastral preenchida e assinada'],
+      pj: ['@socios RG, CPF e certidão de estado civil de todos os sócios e cônjuges', '@faturamento Extrato do Simples ou páginas da ECF (podem pedir 3 extratos da empresa)', 'Faturamento de mais de 5× a mensalidade', 'Inscrição estadual ou municipal', 'Se o imóvel da empresa for alugado: comprovante de endereço do proprietário', 'Ficha cadastral'],
       pj_imovel: ['Certidões: simplificada da Junta, negativa federal, distribuições cíveis, criminais e de executivos fiscais (Fórum e Justiça Federal), trabalhista e de falência e recuperação judicial', 'Carta de ciência'],
       novo: ['@nf Solicitação de faturamento e nota fiscal com alienação à Luiza Administradora de Consórcios'],
       usado: ['@vistoria 4 fotos (frente, traseira e laterais, placa legível) e pesquisa veicular', 'Carta de autorização de gravame assinada por comprador e vendedor'],
       veiculo: ['Taxa de gravame'],
       imovel: ['@vendedor Vendedor: documentos pessoais e certidões cíveis, criminais e de executivos fiscais (Fórum, Justiça Federal e do Trabalho), dele e do cônjuge', '@iptu Certidão negativa de tributos e de valor venal', '@condominio Apartamento: quitação do condomínio com firma do síndico e ata da eleição', 'Fotos coloridas da fachada e dos cômodos'],
-      obs: ['O cadastro vale 90 dias; a análise leva até 10 dias úteis']
+      obs: ['O cadastro vale 90 dias; a análise leva até 10 dias úteis', 'Taxa de cessão: 1,5% (cota contemplada)']
     },
     'Mycon': {
       pf: ['@endereco Comprovante de residência de até 90 dias', '@renda Renda: 3 holerites, carteira de trabalho, IR com recibo, DECORE, carta do empregador ou 3 extratos', 'Renda líquida de 3× a parcela (somando outras cotas Mycon) e nome sem restrição'],

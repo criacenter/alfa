@@ -207,7 +207,7 @@
     if (ehAdmin()) { renderNovo(); }
   }
 
-  const VERSAO = '18/11 · 17h00';
+  const VERSAO = '23/11 · 10h30';
   function aplicarPerfil() {
     if ($('versaoApp')) $('versaoApp').textContent = 'versão ' + VERSAO;
     $('badgeNome').textContent = EU.nome || EU.username;
@@ -1260,7 +1260,7 @@
     const c = it.carta;
     const chave = chaveDiv(it, modo);
     const iso = COPIADOS && COPIADOS[chave];
-    const tag = modo === 'p' ? '<span class="tag-promo">Promocional</span>' : (modo === 'o' ? '<span class="tag-promo">Oportunidade · ' + ARTES[it.seg].nome + '</span>' : '');
+    const tag = modo === 'p' ? '<span class="tag-promo">Promocional</span>' : (modo === 'o' ? '<span class="tag-promo">Oportunidade · ' + ARTES[it.seg].nome + '</span>' : (it.destaque ? '<span class="tag-promo">Melhor da semana (acima de y)</span>' : ''));
     const extra = modo === 'p' ? ' · economia ' + BRL(it.economia) : (modo === 'o' ? ' · entrada total ' + BRL(it.entradaTotal) + ' · clique na data para mudar a validade' : '');
     return `<div class="div-item${iso ? ' copiado' : ''}" data-chave="${esc(chave)}">${tag}<span class="slot-copiado">${iso ? tagCopiado(iso) : ''}</span>
       ${arteHTML(id, it, modo)}
@@ -1268,46 +1268,60 @@
       <button class="btn primary sm" data-copiar-art="${id}">${iso ? '📋 Copiar de novo' : '📋 Copiar imagem'}</button>
       <button class="desmarcar"${iso ? '' : ' hidden'}>desmarcar como copiado</button></div>`;
   }
-  // Parcela máxima por segmento (% do crédito): editável, salva no banco junto com a divulgação
-  let TETOS = null;
+  // Parcela da divulgação por segmento (% do crédito): y (entram todas) e teto de segurança opcional.
+  // Salvo no banco junto com a divulgação. A config antiga (teto único 2,5% / 1%) é ignorada.
+  const REGRA_DIV = 'y-melhor';
+  let TETOS = null, TETO_SEG = null;
   const NOMES_SEG = { motos: 'Motos', solar: 'Energia solar', leves: 'Veículos leves', implementos: 'Implementos', pesados: 'Caminhões', maquinas: 'Máquinas', imoveis: 'Imóveis' };
   const fmtNum = (n) => String(n).replace('.', ',');
   async function carregarTetos() {
     if (TETOS) return;
     TETOS = Object.assign({}, M.PARCELA_PCT_PADRAO);
-    try { const l = JSON.parse(localStorage.getItem('alfa_tetos') || 'null'); if (l) Object.assign(TETOS, l); } catch (e) {}
-    try { const fb = await fbx(); const s = await fb.getDoc(fb.doc(fb.db, 'divulgacao', 'config')); if (s.exists() && s.data().parcelaPct) Object.assign(TETOS, s.data().parcelaPct); } catch (e) {}
+    TETO_SEG = Object.assign({}, M.TETO_SEGURANCA_PADRAO);
+    const aplicar = (o) => { if (o && o.regra === REGRA_DIV) { Object.assign(TETOS, o.parcelaPct || {}); Object.assign(TETO_SEG, o.tetoSeguranca || {}); } };
+    try { aplicar(JSON.parse(localStorage.getItem('alfa_tetos') || 'null')); } catch (e) {}
+    try { const fb = await fbx(); const s = await fb.getDoc(fb.doc(fb.db, 'divulgacao', 'config')); if (s.exists()) aplicar(s.data()); } catch (e) {}
     montarCamposTetos();
   }
   function montarCamposTetos() {
-    $('divTetosCampos').innerHTML = Object.keys(NOMES_SEG).map((k) => `<div class="field"><label for="teto-${k}">${NOMES_SEG[k]}</label><div class="input-row"><span class="prefix">%</span><input type="text" inputmode="decimal" id="teto-${k}" data-seg="${k}" value="${fmtNum(TETOS[k])}"></div></div>`).join('');
-    $('divTetosResumo').textContent = Object.keys(NOMES_SEG).map((k) => NOMES_SEG[k] + ' ' + fmtNum(TETOS[k]) + '%').join(' · ');
+    $('divTetosCampos').innerHTML = Object.keys(NOMES_SEG).map((k) => `<div class="field"><label for="teto-${k}">${NOMES_SEG[k]}</label>
+      <div class="input-row"><span class="prefix">y %</span><input type="text" inputmode="decimal" id="teto-${k}" data-seg="${k}" data-tipo="y" value="${fmtNum(TETOS[k])}"></div>
+      <div class="input-row" style="margin-top:6px;"><span class="prefix">teto %</span><input type="text" inputmode="decimal" data-seg="${k}" data-tipo="teto" placeholder="sem teto" value="${TETO_SEG[k] > 0 ? fmtNum(TETO_SEG[k]) : ''}"></div></div>`).join('');
+    $('divTetosResumo').textContent = Object.keys(NOMES_SEG).map((k) => NOMES_SEG[k] + ' ' + fmtNum(TETOS[k]) + '%' + (TETO_SEG[k] > 0 ? ' (teto ' + fmtNum(TETO_SEG[k]) + '%)' : '')).join(' · ');
   }
   $('btnSalvarTetos').addEventListener('click', async () => {
-    const novos = {};
+    const novos = {}, tetos = {};
     let erro = '';
-    document.querySelectorAll('#divTetosCampos input').forEach((i) => { const v = num(i.value); if (!(v > 0 && v <= 20)) erro = 'Use valores entre 0,1 e 20.'; novos[i.dataset.seg] = v; });
+    document.querySelectorAll('#divTetosCampos input').forEach((i) => {
+      const k = i.dataset.seg;
+      if (i.dataset.tipo === 'teto') {
+        if (!i.value.trim()) { tetos[k] = 0; return; }
+        const v = num(i.value); if (!(v > 0 && v <= 20)) erro = 'O teto fica vazio (sem teto) ou entre 0,1 e 20.'; tetos[k] = v;
+      } else { const v = num(i.value); if (!(v > 0 && v <= 20)) erro = 'Use valores de y entre 0,1 e 20.'; novos[k] = v; }
+    });
+    if (!erro) Object.keys(NOMES_SEG).forEach((k) => { if (tetos[k] > 0 && tetos[k] < novos[k]) erro = NOMES_SEG[k] + ': o teto não pode ficar abaixo do y.'; });
     if (erro) { $('divTetosMsg').textContent = erro; return; }
-    TETOS = novos; montarCamposTetos();
-    try { localStorage.setItem('alfa_tetos', JSON.stringify(TETOS)); } catch (e) {}
-    try { const fb = await fbx(); await fb.setDoc(fb.doc(fb.db, 'divulgacao', 'config'), { parcelaPct: TETOS, atualizadoEm: new Date().toISOString() }); $('divTetosMsg').textContent = 'Salvo.'; }
+    TETOS = novos; TETO_SEG = tetos; montarCamposTetos();
+    const cfg = { regra: REGRA_DIV, parcelaPct: TETOS, tetoSeguranca: TETO_SEG, atualizadoEm: new Date().toISOString() };
+    try { localStorage.setItem('alfa_tetos', JSON.stringify(cfg)); } catch (e) {}
+    try { const fb = await fbx(); await fb.setDoc(fb.doc(fb.db, 'divulgacao', 'config'), cfg); $('divTetosMsg').textContent = 'Salvo.'; }
     catch (e) { $('divTetosMsg').textContent = 'Salvo só neste aparelho (' + traduzErro(e) + ').'; }
     gerarDivulgacao();
   });
-  $('btnTetosPadrao').addEventListener('click', () => { TETOS = Object.assign({}, M.PARCELA_PCT_PADRAO); montarCamposTetos(); $('divTetosMsg').textContent = 'Padrão restaurado. Clique em salvar para aplicar.'; });
+  $('btnTetosPadrao').addEventListener('click', () => { TETOS = Object.assign({}, M.PARCELA_PCT_PADRAO); TETO_SEG = Object.assign({}, M.TETO_SEGURANCA_PADRAO); montarCamposTetos(); $('divTetosMsg').textContent = 'Padrão restaurado. Clique em salvar para aplicar.'; });
 
   // Quadro "Por que as cartas saíram": por segmento, quantas estavam na faixa e qual regra tirou cada uma
   function diagnosticoHTML(D) {
     const linhas = ORDEM_SEG.filter((seg) => D.diag[seg]).map((seg) => {
       const g = D.diag[seg];
-      return `<tr><td>${ARTES[seg].nome}</td><td class="mono">${g.naFaixa}</td><td class="mono${g.foraEntrada ? '" style="color:var(--danger-bright);' : ''}">${g.foraEntrada}</td><td class="mono${g.foraParcela ? '" style="color:var(--danger-bright);' : ''}">${g.foraParcela}</td><td class="mono" style="color:var(--ok);">${g.entram}</td><td class="mono">${pct(g.entradaMin)}</td></tr>`;
+      return `<tr><td>${ARTES[seg].nome}</td><td class="mono">${g.naFaixa}</td><td class="mono${g.foraEntrada ? '" style="color:var(--danger-bright);' : ''}">${g.foraEntrada}</td><td class="mono${g.foraParcela ? '" style="color:var(--danger-bright);' : ''}">${g.foraParcela}</td><td class="mono" style="color:var(--ok);">${g.entram}${g.destaque ? ' (a melhor, acima de y)' : ''}</td><td class="mono">${pct(g.entradaMin)}</td><td class="mono">${g.parcelaMin < Infinity ? pct(g.parcelaMin) : '—'}</td></tr>`;
     }).join('');
     return `<details class="stock-card" style="margin-bottom:22px;" open><summary style="cursor:pointer; font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:600;">Por que as cartas saíram</summary>
       <div class="section-sub" style="margin:10px 0 12px;">Só cartas comuns (as Oportunidades entram todas). Cada carta aparece em um segmento só: quando cabe em dois, vai para aquele em que a administradora está melhor ranqueada${realocTxt(D.realocadas)}. ${D.semFaixa} carta(s) da base estão fora de todas as faixas de crédito.</div>
-      <div class="table-wrap"><table class="data-table comp-table"><thead><tr><th>Segmento</th><th>Na faixa de crédito</th><th>Saíram pela entrada (35%)</th><th>Saíram pela parcela</th><th>Entram</th><th>Menor entrada da faixa</th></tr></thead>
-      <tbody>${linhas || '<tr><td colspan="6" class="lote-vazio">Nenhuma carta comum dentro das faixas de crédito.</td></tr>'}</tbody></table></div>
+      <div class="table-wrap"><table class="data-table comp-table"><thead><tr><th>Segmento</th><th>Na faixa de crédito</th><th>Saíram pela entrada (35%)</th><th>Saíram pela parcela</th><th>Entram</th><th>Menor entrada da faixa</th><th>Menor parcela (entrada abaixo de 35%)</th></tr></thead>
+      <tbody>${linhas || '<tr><td colspan="7" class="lote-vazio">Nenhuma carta comum dentro das faixas de crédito.</td></tr>'}</tbody></table></div>
       ${(D.fora || []).length ? `<div class="section-title" style="font-size:15px; margin:22px 0 4px;">Onde estão as ${D.semFaixa} cartas fora das faixas</div>
-      <div class="section-sub" style="margin-bottom:10px;">"Passariam" usa a mesma regra de preço da divulgação, a entrada abaixo de 35% e a parcela até 2,5% (imóveis 1%).</div>
+      <div class="section-sub" style="margin-bottom:10px;">"Passariam" usa a mesma regra de preço da divulgação, a entrada abaixo de 35% e a parcela até o y do segmento de referência.</div>
       <div class="table-wrap"><table class="data-table comp-table"><thead><tr><th>Tipo</th><th>Faixa de crédito</th><th>Cartas</th><th>Com entrada abaixo de 35%</th><th>Passariam (entrada e parcela)</th></tr></thead><tbody>
       ${D.fora.map((g) => `<tr><td>${g.tipo === 'imovel' ? 'Imóvel' : 'Veículo'}</td><td class="mono">${g.max === Infinity ? 'acima de ' + BRL(g.min) : (g.min ? BRL(g.min) + ' a ' : 'até ') + BRL(g.max)}</td><td class="mono">${g.total}</td><td class="mono">${g.entrada35}</td><td class="mono" style="color:var(--ok);">${g.ambos}</td></tr>`).join('')}
       </tbody></table></div>` : ''}</details>`;
@@ -1317,7 +1331,7 @@
     if (!ehAdmin()) return;
     await carregarCopiados();
     await carregarTetos();
-    DIV = M.selecionarDivulgacao(BASE, { parcelaPct: TETOS, regrasAdm: REGRAS });
+    DIV = M.selecionarDivulgacao(BASE, { parcelaPct: TETOS, tetoSeguranca: TETO_SEG, regrasAdm: REGRAS });
     const out = $('divResultados');
     let h = '', total = 0;
     ORDEM_SEG.forEach((seg) => {
