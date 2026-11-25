@@ -986,6 +986,7 @@
 
   // LR Contemplados (WhatsApp): linha da administradora ("🔴 MYCON"), linha do tipo ("🚘 AUTOMÓVEIS"),
   // depois cada carta: "1️⃣ CRÉDITO: R$ ..." / "💰 ENTRADA: R$ ..." / "📄 PARCELAS: 27x R$ ... + 24x R$ ..."
+  // Também lê o modelo com tipo e administradora na mesma linha ("🚘 AUTOMÓVEIS – MYCON") e "📄 Saldo: 58x de R$ ... + 7x de R$ ...".
   function lerLR(texto) {
     const cartas = [], ignoradas = [];
     let tipo = '', adm = '', atual = null, anterior = '';
@@ -1029,6 +1030,15 @@
         return;
       }
       if (/R\$/.test(limpa)) { if (atual) atual.obs.push(limpa); return; }
+      // Tipo e administradora na mesma linha, separados por traço ("🚘 AUTOMÓVEIS – MYCON")
+      if (/\s[–\-|]\s/.test(limpa)) {
+        const partes = limpa.split(/\s[–\-|]\s/).map((x) => x.trim()).filter(Boolean);
+        if (partes.length === 2 && partes.every((x) => x.split(' ').length <= 3)) {
+          const t2 = partes.map((x) => tipoDoCabecalho(x)).find(Boolean) || '';
+          const a2 = partes.map((x) => conhecida(x)).find(Boolean) || '';
+          if (t2 && a2) { fechar(); tipo = t2; adm = a2; anterior = ''; return; }
+        }
+      }
       // linha curta de tipo ("AUTOMÓVEIS", "IMÓVEIS", "MOTOS", "CAMINHÕES")
       const palavras = limpa.split(' ').filter(Boolean);
       const t = palavras.length <= 3 ? tipoDoCabecalho(limpa) : '';
